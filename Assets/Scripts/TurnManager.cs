@@ -15,7 +15,8 @@ public class TurnManager : MonoBehaviour
   [SerializeField] private SlimePartyStatus MySlimeParty;
   public UnitController SelectedUnit = null; // all units in turn order, player + AI mixed
   public bool PlayerTurn { get; private set; }
-  private string prevAction;
+  public int PlayerTurnCount { get; private set; } = 0;
+  private int prevAction;
   private bool actionTaken = false;
 
   void Awake()
@@ -82,7 +83,7 @@ public class TurnManager : MonoBehaviour
 
     IEnumerator WaitForUnitAction()
     {
-      while (SelectedUnit.IsIdle())
+      while (SelectedUnit.MyStateManager.IsIdle())
         yield return null;
       /* 
       Action selected:
@@ -91,38 +92,39 @@ public class TurnManager : MonoBehaviour
       * EmptyClick = 3,
       * EnemyClick = 4
       */
-      switch (SelectedUnit.CurrentActionType)
-      {
-        case UnitController.ActionType.NoClick:
-          SelectedUnit.NoClick();
-          break;
+      // switch (SelectedUnit.CurrentActionType)
+      // {
+      //   case UnitController.ActionType.NoClick:
+      //     SelectedUnit.NoClick();
+      //     break;
 
-        case UnitController.ActionType.FreeClick:
-          yield return StartCoroutine(WaitForGridSelection(false));
-          break;
+      //   case UnitController.ActionType.FreeClick:
+      //     yield return StartCoroutine(WaitForGridSelection(false));
+      //     break;
 
-        case UnitController.ActionType.EmptyClick:
-          yield return StartCoroutine(WaitForGridSelection(true));
-          break;
+      //   case UnitController.ActionType.EmptyClick:
+      //     yield return StartCoroutine(WaitForGridSelection(true));
+      //     break;
 
-        case UnitController.ActionType.EnemyClick:
-          yield return StartCoroutine(WaitForGridSelection(true));
-          break;
+      //   case UnitController.ActionType.EnemyClick:
+      //     yield return StartCoroutine(WaitForGridSelection(true));
+      //     break;
 
-        default:
-          break;
-      }
+      //   default:
+      //     break;
+      // }
     }
 
     void AfterAction()
     {
       actionTaken = false;
-      SelectedUnit.Idle();
+      SelectedUnit.MyStateManager.Transition(SelectedUnit.States[IdleState.Name]);
       SelectedUnit.SetCurrentAP(SelectedUnit.GetCurrentAP() - 1);
       UIManager.Instance.UpdateUnitInfoPanel(SelectedUnit);
     }
     void EndPlayerTurn()
     {
+      PlayerTurnCount++;
       PlayerTurn = false;
       SelectedUnit.ResetCurrentAP();
       UIManager.Instance.ClearUnitInfoPanel();
@@ -135,13 +137,13 @@ public class TurnManager : MonoBehaviour
      */
     IEnumerator WaitForGridSelection(bool withDetection)
     {
-      MyRangeManager.ShowRanges(MyGridManager, SelectedUnit.transform.position, SelectedUnit.SkillRange[SelectedUnit.CurrentAction]);
+      MyRangeManager.ShowRanges(MyGridManager, SelectedUnit.transform.position, SelectedUnit.SkillRange[SelectedUnit.MyStateManager.CurrentState.Name]);
 
       bool locationChosen = false;
       Vector2Int start, end;
       List<Vector2Int> path = new(GridManager.MaxGridSize);
-      prevAction = SelectedUnit.CurrentAction;
-      while (!locationChosen && SelectedUnit.CurrentAction == prevAction)
+      prevAction = SelectedUnit.MyStateManager.CurrentState.StateHash;
+      while (!locationChosen && SelectedUnit.MyStateManager.CurrentState.StateHash == prevAction)
       {
         if (Mouse.current.leftButton.wasPressedThisFrame)
         {

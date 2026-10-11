@@ -136,7 +136,7 @@ public class GridManager : ScriptableObject
     if (Phase + 1 <= MaxPhases)
     {
       Phase++;
-      MapGenerator.Instance.ScaleGround();
+      MapFactory.Instance.ScaleGround();
     }
   }
 

@@ -1,4 +1,4 @@
-public class HeroController : UnitController
+public abstract class HeroController : UnitController
 {
   public static new int CurrentAP = 2;
   public static new int TotalAP = 2;

@@ -86,6 +86,8 @@ public class UIManager : MonoBehaviour
 
   private void AddActionSelectionButton(UnitController unit, KeyValuePair<string, int> action)
   {
+    if (unit.CurrentLevel < action.Value) return;
+
     ActionSelect _button = Instantiate(ActionButton, UnitActionsParent).GetComponent<ActionSelect>();
     _button.ButtonLabel.text = action.Key;
     _button.SetActionDetails(action.Key, action.Value, unit.SkillDesc[action.Key]);

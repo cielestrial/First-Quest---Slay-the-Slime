@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 
 [RequireComponent(typeof(Animator))]
-public class UnitController : MonoBehaviour
+public abstract class UnitController : MonoBehaviour
 {
   [SerializeField] protected GridManager MyGridManager;
   [SerializeField] protected int MoveSpeed = 5;
@@ -27,7 +27,6 @@ public class UnitController : MonoBehaviour
   protected Animator myAnimator;
   public string UnitName;
   // public bool CurrentTurn = false;
-  public string CurrentAction = "Idle";
   public static readonly int MoveStateHash = Animator.StringToHash("Move");
   public enum ActionType
   {
@@ -37,8 +36,10 @@ public class UnitController : MonoBehaviour
     EmptyClick = 3,
     EnemyClick = 4
   }
-  public ActionType CurrentActionType { get; private set; } = ActionType.Idle;
 
+  public StateManager MyStateManager { get; protected set; }
+
+  public Dictionary<string, State> States { get; protected set; } = new(15);
   public Dictionary<string, int> SkillTree { get; protected set; } = new(15);
   public Dictionary<string, string> SkillDesc { get; protected set; } = new(15);
   public Dictionary<string, ActionType> SkillActionType { get; protected set; } = new(15);
@@ -62,36 +63,15 @@ public class UnitController : MonoBehaviour
 
   public void SetTurn()
   {
-    Idle();
+    UIManager.Instance.ClearActionDescription();
     TurnManager.Instance.SelectedUnit = this;
   }
 
   public static Vector2Int GenerateSquareRange(int factor) => new(factor * 2, factor);
 
-  public virtual void PerformAction(string actionName) { }
-
-  public void Idle()
+  public void PerformAction(string actionName)
   {
-    CurrentActionType = ActionType.Idle;
-    CurrentAction = "Idle";
-    UIManager.Instance.ClearActionDescription();
-  }
-  public bool IsIdle() => CurrentActionType == ActionType.Idle;
-  public void NoClick()
-  {
-    CurrentActionType = ActionType.NoClick;
-  }
-  public void FreeClick()
-  {
-    CurrentActionType = ActionType.FreeClick;
-  }
-  public void EmptyClick()
-  {
-    CurrentActionType = ActionType.EmptyClick;
-  }
-  public void EnemyClick()
-  {
-    CurrentActionType = ActionType.EnemyClick;
+    MyStateManager.Transition(States[actionName]);
   }
 
   public void SetUnitSelectButton(UnitSelect _button)

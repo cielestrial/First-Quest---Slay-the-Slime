@@ -95,7 +95,7 @@ public class RangeManager : MonoBehaviour
 
   public void ClipRanges()
   {
-    Transform ground = MapGenerator.Instance.GroundParentInstance.transform.GetChild(0);
+    Transform ground = MapFactory.Instance.GroundParentInstance.transform.GetChild(0);
     ClipSetup.SetupClipBounds(ground.GetComponent<Renderer>(), gameObject);
   }
 

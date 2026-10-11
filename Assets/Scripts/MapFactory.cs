@@ -1,8 +1,8 @@
 using UnityEngine;
 
-public class MapGenerator : MonoBehaviour
+public class MapFactory : MonoBehaviour
 {
-  public static MapGenerator Instance { get; private set; }
+  public static MapFactory Instance { get; private set; }
 
   [SerializeField] private GridManager MyGridManager;
 

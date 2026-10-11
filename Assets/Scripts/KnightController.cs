@@ -1,10 +1,11 @@
+using States.Knight;
 
 public class KnightController : HeroController
 {
   void Awake()
   {
     // Level Requirement to learn
-    SkillTreeUnlock.Add("Move", 1);
+    SkillTreeUnlock.Add(MoveState.Name, 1);
     SkillTreeUnlock.Add("Slash", 1);
     SkillTreeUnlock.Add("Block", 4);
     SkillTreeUnlock.Add("Mega Slash", 8);
@@ -12,7 +13,7 @@ public class KnightController : HeroController
     SkillTreeUnlock.Add("Counter", 16);
     SkillTreeUnlock.Add("Awakening", 24);
     // Skill Descriptions
-    SkillDesc.Add("Move", "Active\nEmpty: Move to a new location");
+    SkillDesc.Add(MoveState.Name, "Active\nEmpty: Move to a new location");
     SkillDesc.Add("Slash", "Active\nEnemy: Deal single target damage");
     SkillDesc.Add("Block", "Active\nNone: Reduce incoming damage");
     SkillDesc.Add("Mega Slash", "Active\nEnemy: Deal AOE damage");
@@ -20,7 +21,7 @@ public class KnightController : HeroController
     SkillDesc.Add("Counter", "Passive: Upon succesful block retaliate with slash");
     SkillDesc.Add("Awakening", "Passive: Gain access to specialized skills");
     // Skill Type
-    SkillActionType.Add("Move", ActionType.EmptyClick);
+    SkillActionType.Add(MoveState.Name, ActionType.EmptyClick);
     SkillActionType.Add("Slash", ActionType.EnemyClick);
     SkillActionType.Add("Block", ActionType.NoClick);
     SkillActionType.Add("Mega Slash", ActionType.EnemyClick);
@@ -29,7 +30,7 @@ public class KnightController : HeroController
     SkillActionType.Add("Awakening", ActionType.Idle);
     // Skill Ranges 1 = 1, 2 = 3, 3 = 5, 4 = 7, 5 = 9...
     // Where (1, 1) is a cross and (2, 1) is a square
-    SkillRange.Add("Move", GenerateSquareRange(2));
+    SkillRange.Add(MoveState.Name, GenerateSquareRange(2));
     SkillRange.Add("Slash", new(1, 1));
     SkillRange.Add("Mega Slash", new(2, 1));
     // Skill Upgrade available every x levels from learn requirement level
@@ -39,66 +40,78 @@ public class KnightController : HeroController
     UpgradeTree.Add("Party Up", 10);
     UpgradeTree.Add("Counter", 5);
     // Skill Tree, learnt skills and their level
-    SkillTree.Add("Move", 1);
+    SkillTree.Add(MoveState.Name, 1);
     SkillTree.Add("Slash", 1);
     // SkillTree.Add("Block", 1);
     SkillTree.Add("Mega Slash", 1);
     // SkillTree.Add("Party Up", 1);
     // SkillTree.Add("Counter", 1);
     // SkillTree.Add("Awakening", 1);
+
+    // States
+    States.Add(IdleState.Name, new IdleState(this, myAnimator, transform));
+    States.Add(MoveState.Name, new MoveState(this, myAnimator, transform));
+    // States.Add("Slash", 1);
+    // States.Add("Block", 4);
+    // States.Add("Mega Slash", 8);
+    // States.Add("Party Up", 10);
+    // States.Add("Counter", 16);
+    // States.Add("Awakening", 24);
+
+    MyStateManager = new KnightStateManager(States[IdleState.Name]);
   }
 
 
 
-  public override void PerformAction(string actionName)
-  {
-    CurrentAction = actionName;
-    switch (CurrentAction)
-    {
-      case "Move":
-        EmptyClick();
-        break;
+  // public override void PerformAction(string actionName)
+  // {
+  //   CurrentAction = actionName;
+  //   switch (CurrentAction)
+  //   {
+  //     case "Move":
+  //       EmptyClick();
+  //       break;
 
-      case "Slash":
-        EnemyClick();
-        break;
+  //     case "Slash":
+  //       EnemyClick();
+  //       break;
 
-      case "Mega Slash":
-        if (CurrentLevel < SkillTreeUnlock["Mega Slash"])
-          EnemyClick();
-        break;
+  //     case "Mega Slash":
+  //       if (CurrentLevel < SkillTreeUnlock["Mega Slash"])
+  //         EnemyClick();
+  //       break;
 
-      case "Block":
-        if (CurrentLevel < SkillTreeUnlock["Block"])
-          NoClick();
-        break;
+  //     case "Block":
+  //       if (CurrentLevel < SkillTreeUnlock["Block"])
+  //         NoClick();
+  //       break;
 
-      default:
-        Idle();
-        break;
-    }
-  }
+  //     default:
+  //       Idle();
+  //       break;
+  //   }
+  // }
 
-  public void Passive(string _passive)
-  {
-    switch (_passive)
-    {
-      case "Party Up":
-        if (CurrentLevel < SkillTreeUnlock["Party Up"])
-          Idle();
-        break;
+  // public void Passive(string _passive)
+  // {
+  //   switch (_passive)
+  //   {
+  //     case "Party Up":
+  //       if (CurrentLevel < SkillTreeUnlock["Party Up"])
+  //         Idle();
+  //       break;
 
-      case "Counter":
-        if (CurrentLevel < SkillTreeUnlock["Counter"])
-          Idle();
-        break;
+  //     case "Counter":
+  //       if (CurrentLevel < SkillTreeUnlock["Counter"])
+  //         Idle();
+  //       break;
 
-      case "Awakening":
-        if (CurrentLevel < SkillTreeUnlock["Awakening"])
-          Idle();
-        break;
-    }
+  //     case "Awakening":
+  //       if (CurrentLevel < SkillTreeUnlock["Awakening"])
+  //         Idle();
+  //       break;
+  //   }
 
-  }
+  // }
 
 }

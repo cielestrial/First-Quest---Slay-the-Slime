@@ -4,6 +4,7 @@ using UnityEngine;
 [CreateAssetMenu(fileName = "GridManager", menuName = "Scriptable Objects/GridManager")]
 public class GridManager : ScriptableObject
 {
+  public MapFactory MyMapFactory { get; private set; } = null;
   public Vector3[,] LocationGrid { get; private set; }
   public int[,] DetectionGrid { get; private set; }
   public enum DetectionType
@@ -15,18 +16,13 @@ public class GridManager : ScriptableObject
   }
   public int Phase { get; private set; } = 1;
   public int PhaseMaxRowSize { get; private set; }
-  public static readonly int MaxPhases = 3;
+  public const int MaxPhases = 3;
   // Must be an even number
-  public static readonly int DefaultRowSize = 9;
-  // public static readonly int RowOffset = 1;
-  public static readonly int MaxRowSize = (MaxPhases * 2 - 1) * DefaultRowSize;
-  public static readonly int MaxGridSize = MaxRowSize * MaxRowSize;
-
-  // At Phase 3 its 3 to reach middle
-
-
-  public static readonly float SpacingX = 0.1f;
-  public static readonly float SpacingZ = 0.4f;
+  public const int DefaultRowSize = 9;
+  public const int MaxRowSize = (MaxPhases * 2 - 1) * DefaultRowSize;
+  public const int MaxGridSize = MaxRowSize * MaxRowSize;
+  public const float SpacingX = 0.1f;
+  public const float SpacingZ = 0.4f;
 
   void OnEnable()
   {
@@ -64,13 +60,12 @@ public class GridManager : ScriptableObject
   }
 
   // Breadth-First Search
-  public List<Vector2Int> FindMovePath(Vector2Int start, Vector2Int target, bool withDetection)
+  public List<Vector2Int> FindMovePath(Vector2Int start, Vector2Int target, bool detectEmpty)
   {
 
     Queue<Vector2Int> queue = new(MaxGridSize);
     HashSet<Vector2Int> visited = new(MaxGridSize);
     Dictionary<Vector2Int, Vector2Int> cameFrom = new(MaxGridSize);
-    int dirIndex;
     Vector2Int adjacent;
     // procedure BFS(G, root) is
 
@@ -86,10 +81,12 @@ public class GridManager : ScriptableObject
         return ReconstructPath(cameFrom, start, target);
       }
 
-      for (dirIndex = 0; dirIndex < 4; ++dirIndex)
+      for (int dirIndex = 0; dirIndex < 4; ++dirIndex)
       {
         adjacent = currentCell + RangeManager.Cardinals2D[dirIndex];
-        if (visited.Contains(adjacent) || !ValidateGridLocation(adjacent, withDetection))
+        if (visited.Contains(adjacent) || !ValidGridLocation(adjacent))
+          continue;
+        if (detectEmpty && !DetectEmptyCell(adjacent))
           continue;
 
         visited.Add(adjacent);
@@ -114,29 +111,57 @@ public class GridManager : ScriptableObject
     return path;
   }
 
-  public bool ValidateGridLocation(Vector2Int location, bool withDetection)
+  public static bool ValidGridLocation(Vector2Int location)
   {
     if (location.x < 0 || MaxRowSize - 1 < location.x)
       return false;
     else if (location.y < 0 || MaxRowSize - 1 < location.y)
       return false;
-    else if (withDetection)
-    {
-      if (DetectionGrid[location.x, location.y] != (int)DetectionType.Nothing)
-        return false;
-      else
-        return true;
-    }
     else
       return true;
   }
 
+  private bool DetectEmptyCell(Vector2Int location)
+    => DetectionGrid[location.x, location.y] == (int)DetectionType.Nothing;
+
+  private bool DetectAllyCell(Vector2Int location)
+=> DetectionGrid[location.x, location.y] == (int)DetectionType.Ally;
+
+  private bool DetectEnemyCell(Vector2Int location)
+    => DetectionGrid[location.x, location.y] == (int)DetectionType.Enemy;
+
+  private bool DetectTerrainCell(Vector2Int location)
+  => DetectionGrid[location.x, location.y] == (int)DetectionType.Terrain;
+
+  public List<Vector2Int> FilterEnemies(List<Vector2Int> aoe)
+  {
+    List<Vector2Int> potentialVictims = new(aoe.Count);
+    Vector2Int cell;
+    for (int aoeIndex = 0; aoeIndex < aoe.Count; ++aoeIndex)
+    {
+      cell = aoe[aoeIndex];
+      if (DetectEnemyCell(cell))
+        potentialVictims.Add(cell);
+    }
+    return potentialVictims;
+  }
+
+  public void AttachMapFactory(MapFactory mapFactory)
+  {
+    MyMapFactory = mapFactory;
+  }
+
   public void NextPhase()
   {
+    if (MyMapFactory == null)
+    {
+      Debug.Log("No Map Factory");
+      return;
+    }
     if (Phase + 1 <= MaxPhases)
     {
       Phase++;
-      MapFactory.Instance.ScaleGround();
+      MyMapFactory.ScaleGround();
     }
   }
 

@@ -1,38 +1,51 @@
 using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.InputSystem;
 
 public class TurnManager : MonoBehaviour
 {
-  public static TurnManager Instance { get; private set; }
-
-  [SerializeField] private GridManager MyGridManager;
-  [SerializeField] private TargetingSystem MyTargetingSystem;
+  [SerializeField] private EventSystem MyEventSystem;
   [SerializeField] private RangeManager MyRangeManager;
   // Start is called once before the first execution of Update after the MonoBehaviour is created
   [SerializeField] private HeroPartyStatus MyHeroParty;
   [SerializeField] private SlimePartyStatus MySlimeParty;
-  public UnitController SelectedUnit = null; // all units in turn order, player + AI mixed
+  public UnitController SelectedUnit { get; private set; } = null; // all units in turn order, player + AI mixed
   public bool PlayerTurn { get; private set; }
   public int PlayerTurnCount { get; private set; } = 0;
-  private int prevAction;
-  private bool actionTaken = false;
+  public const float GameSpeed = 1.3f;
 
-  void Awake()
-  {
-    if (Instance != null && Instance != this)
-    {
-      Destroy(gameObject);
-      return;
-    }
-    Instance = this;
-  }
+  private static readonly WaitForSeconds waitForSeconds = new(1f);
 
   void Start()
   {
+    MyEventSystem.MyTurnEvent.AddListener(this);
     PlayerTurn = MySlimeParty.isPlaying;
     StartCoroutine(RunTurns());
+  }
+
+  void OnEnable()
+  {
+    MyEventSystem.MyTurnEvent.AddListener(this);
+  }
+
+  void OnDisable()
+  {
+    StopAllCoroutines();
+    MyEventSystem.MyTurnEvent?.RemoveListener(this);
+    PlayerTurn = false;
+  }
+
+  private bool IsGameOver()
+  {
+    if (MyHeroParty.isPlaying)
+    {
+      return MyHeroParty.GetPartyHp() <= 0;
+    }
+    else if (MySlimeParty.isPlaying)
+    {
+      return MySlimeParty.GetPartyHp() <= 0;
+    }
+    else
+      return false;
   }
 
   IEnumerator RunTurns()
@@ -45,13 +58,7 @@ public class TurnManager : MonoBehaviour
         yield return StartCoroutine(WaitForUnitSelection());
         // Select Action
         if (SelectedUnit != null)
-        {
           yield return StartCoroutine(WaitForUnitAction());
-          if (actionTaken)
-            AfterAction();
-          if (SelectedUnit.GetCurrentAP() == 0)
-            EndPlayerTurn();
-        }
       }
       else
       {
@@ -59,20 +66,6 @@ public class TurnManager : MonoBehaviour
         PlayerTurn = true;
       }
       yield return null;
-    }
-
-    bool IsGameOver()
-    {
-      if (MyHeroParty.isPlaying)
-      {
-        return MyHeroParty.GetPartyHp() <= 0;
-      }
-      else if (MySlimeParty.isPlaying)
-      {
-        return MySlimeParty.GetPartyHp() <= 0;
-      }
-      else
-        return false;
     }
 
     IEnumerator WaitForUnitSelection()
@@ -83,8 +76,11 @@ public class TurnManager : MonoBehaviour
 
     IEnumerator WaitForUnitAction()
     {
-      while (SelectedUnit.MyStateManager.IsIdle())
+      while (SelectedUnit.IsInIdleOrBlockState())
         yield return null;
+
+      MyEventSystem.Snapshot();
+      yield return StartCoroutine(SelectedUnit.CurrentStateCoroutine());
       /* 
       Action selected:
       * NoClick = 1,
@@ -115,63 +111,9 @@ public class TurnManager : MonoBehaviour
       // }
     }
 
-    void AfterAction()
-    {
-      actionTaken = false;
-      SelectedUnit.MyStateManager.Transition(SelectedUnit.States[IdleState.Name]);
-      SelectedUnit.SetCurrentAP(SelectedUnit.GetCurrentAP() - 1);
-      UIManager.Instance.UpdateUnitInfoPanel(SelectedUnit);
-    }
-    void EndPlayerTurn()
-    {
-      PlayerTurnCount++;
-      PlayerTurn = false;
-      SelectedUnit.ResetCurrentAP();
-      UIManager.Instance.ClearUnitInfoPanel();
-      UIManager.Instance.ClearUnitActionsPanel();
-      SelectedUnit = null;
-    }
-
-    /**
-      Only works for move atm
-     */
-    IEnumerator WaitForGridSelection(bool withDetection)
-    {
-      MyRangeManager.ShowRanges(MyGridManager, SelectedUnit.transform.position, SelectedUnit.SkillRange[SelectedUnit.MyStateManager.CurrentState.Name]);
-
-      bool locationChosen = false;
-      Vector2Int start, end;
-      List<Vector2Int> path = new(GridManager.MaxGridSize);
-      prevAction = SelectedUnit.MyStateManager.CurrentState.StateHash;
-      while (!locationChosen && SelectedUnit.MyStateManager.CurrentState.StateHash == prevAction)
-      {
-        if (Mouse.current.leftButton.wasPressedThisFrame)
-        {
-          Vector3? targetLocation = MyTargetingSystem.GetTargetLocation();
-          if (targetLocation != null)
-          {
-            start = GridManager.ConvertWorldPosToGrid(SelectedUnit.transform.position);
-            end = GridManager.ConvertWorldPosToGrid((Vector3)targetLocation);
-            path = MyGridManager.FindMovePath(start, end, withDetection);
-            if (path.Count > 0)
-              locationChosen = true;
-          }
-        }
-        yield return null;
-      }
-
-      MyRangeManager.HideRanges();
-      if (locationChosen)
-      {
-        yield return StartCoroutine(SelectedUnit.Move(path));
-        // Move chosen
-        actionTaken = true;
-      }
-    }
-
     IEnumerator WaitForEnemy()
     {
-      yield return new WaitForSeconds(1f);
+      yield return waitForSeconds;
 
       // Vector2Int targetCell = unit.DecideAIMove();
       // List<Vector2Int> path = Pathfinder.FindPath(unit.GridPos, targetCell);
@@ -179,5 +121,26 @@ public class TurnManager : MonoBehaviour
       // yield return StartCoroutine(unit.MoveAlongPath(path));
     }
 
+  }
+
+  public void RegisterUnit(UnitController unit) { SelectedUnit = unit; }
+  public void UnregisterUnit() { SelectedUnit = null; }
+
+  public void AfterAction()
+  {
+    StartCoroutine(SelectedUnit.PerformAction(IdleState.Name));
+    MyEventSystem.MyUIEvent.UpdateUnitInfo(SelectedUnit);
+    if (SelectedUnit.GetCurrentAP() == 0)
+      EndPlayerTurn();
+  }
+
+  public void EndPlayerTurn()
+  {
+    PlayerTurnCount++;
+    PlayerTurn = false;
+    SelectedUnit.ResetCurrentAP();
+    MyEventSystem.MyUIEvent.ClearUnitInfoPanel();
+    MyEventSystem.MyUIEvent.ClearUnitActionsPanel();
+    UnregisterUnit();
   }
 }

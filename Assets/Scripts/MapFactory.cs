@@ -2,70 +2,67 @@ using UnityEngine;
 
 public class MapFactory : MonoBehaviour
 {
-  public static MapFactory Instance { get; private set; }
-
   [SerializeField] private GridManager MyGridManager;
 
-  [SerializeField] private GameObject GroundParent;
-  public GameObject GroundParentInstance { get; private set; }
+  [SerializeField] private GameObject GroundPivotPrefab;
+  public GameObject GroundPivot { get; private set; }
 
   [SerializeField] private Transform CellParent;
-  [SerializeField] private GameObject CubeCell;
-  [SerializeField] private GameObject QuadCell;
+  [SerializeField] private GameObject CubeCellPrefab;
+  [SerializeField] private GameObject QuadCellPrefab;
 
-  [SerializeField] private GameObject Hero;
-  [SerializeField] private HeroPartyStatus MyHeroParty;
-  [SerializeField] private GameObject Slime;
-  [SerializeField] private SlimePartyStatus MySlimeParty;
+  [SerializeField] private GameObject HeroPrefab;
+  [SerializeField] private HeroPartyStatus HeroParty;
+  [SerializeField] private GameObject SlimePrefab;
+  [SerializeField] private SlimePartyStatus SlimeParty;
 
 
   void Awake()
   {
-    if (Instance != null && Instance != this)
-    {
-      Destroy(gameObject);
-      return;
-    }
-    Instance = this;
-    BoxCollider collider = CubeCell.GetComponent<BoxCollider>();
+    BoxCollider collider = CubeCellPrefab.GetComponent<BoxCollider>();
     collider.size = new Vector3(1 + GridManager.SpacingX / 2, 1, 1 + GridManager.SpacingZ / 2);
     collider.center = new Vector3(GridManager.SpacingX / 4, 0, GridManager.SpacingZ / 4);
+  }
+
+  void OnEnable()
+  {
+    MyGridManager.AttachMapFactory(this);
   }
 
   void Start()
   {
     // Ground Plane
-    GroundParentInstance = Instantiate(GroundParent, Vector3.up, Quaternion.identity, transform);
+    GroundPivot = Instantiate(GroundPivotPrefab, Vector3.up, Quaternion.identity, transform);
     ScaleGround();
 
     // Grid
-    int[] randCells = ShuffleList(MyGridManager.GetLocationArrayPhase1());
+    int[] randCells = ShuffleArray(MyGridManager.GetLocationArrayPhase1());
     Vector2Int randIndex;
     for (int i = 0, l = randCells.Length; i < l; ++i)
     {
       randIndex = GridManager.ConvertIndexToVector2Int(randCells[i]);
-      Instantiate(CubeCell, MyGridManager.LocationGrid[randIndex.x, randIndex.y], Quaternion.identity, CellParent);
+      Instantiate(CubeCellPrefab, MyGridManager.LocationGrid[randIndex.x, randIndex.y], Quaternion.identity, CellParent);
     }
 
     // Slime
-    Vector2Int slimeStartL = MySlimeParty.GetStartLocation();
-    Quaternion slimeStartQ = MySlimeParty.GetStartQuaternion();
-    GameObject slime = Instantiate(Slime, MyGridManager.LocationGrid[slimeStartL.x, slimeStartL.y], slimeStartQ);
-    MySlimeParty.SetSlime(slime.GetComponent<SlimeController>());
+    Vector2Int slimeStartL = SlimeParty.GetStartLocation();
+    Quaternion slimeStartQ = SlimeParty.GetStartQuaternion();
+    GameObject slime = Instantiate(SlimePrefab, MyGridManager.LocationGrid[slimeStartL.x, slimeStartL.y], slimeStartQ);
+    SlimeParty.AddUnit(slime.GetComponent<SlimeController>());
     // Hero
-    Vector2Int heroStartL = MyHeroParty.GetStartLocation();
-    Quaternion heroStartQ = MyHeroParty.GetStartQuaternion();
-    GameObject hero = Instantiate(Hero, MyGridManager.LocationGrid[heroStartL.x, heroStartL.y], heroStartQ);
-    MyHeroParty.SetKnight(hero.GetComponent<KnightController>());
+    Vector2Int heroStartL = HeroParty.GetStartLocation();
+    Quaternion heroStartQ = HeroParty.GetStartQuaternion();
+    GameObject hero = Instantiate(HeroPrefab, MyGridManager.LocationGrid[heroStartL.x, heroStartL.y], heroStartQ);
+    HeroParty.AddUnit(hero.GetComponent<KnightController>());
   }
 
   public void ScaleGround()
   {
     float x, z;
-    GroundParentInstance.transform.position = PositionGround();
+    GroundPivot.transform.position = PositionGround();
     x = MyGridManager.PhaseMaxRowSize * (1 + GridManager.SpacingX) - GridManager.SpacingX;
     z = MyGridManager.PhaseMaxRowSize * (1 + GridManager.SpacingZ) - GridManager.SpacingZ;
-    GroundParentInstance.transform.localScale = new Vector3(x, 1, z);
+    GroundPivot.transform.localScale = new Vector3(x, 1, z);
   }
 
   private Vector3 PositionGround()
@@ -76,7 +73,7 @@ public class MapFactory : MonoBehaviour
     return new Vector3(x, 0, z) + RangeManager.PivotOffset;
   }
 
-  static int[] ShuffleList(int[] _list)
+  public static int[] ShuffleArray(int[] _list)
   {
     for (int len = _list.Length - 1, rand, temp; len > 1; --len)
     {

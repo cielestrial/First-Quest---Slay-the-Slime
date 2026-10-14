@@ -2,6 +2,7 @@ using UnityEngine;
 
 public class ResetBlock : StateMachineBehaviour
 {
+  private readonly int blockHash = Animator.StringToHash("Block");
 
   // OnStateEnter is called when a transition starts and the state machine starts to evaluate this state
   //override public void OnStateEnter(Animator animator, AnimatorStateInfo stateInfo, int layerIndex)
@@ -18,7 +19,7 @@ public class ResetBlock : StateMachineBehaviour
   // OnStateExit is called when a transition ends and the state machine finishes evaluating this state
   override public void OnStateExit(Animator myAnimator, AnimatorStateInfo stateInfo, int layerIndex)
   {
-    myAnimator.SetBool(HeroPartyStatus.BlockStateHash, false);
+    myAnimator.SetBool(blockHash, false);
   }
 
   // OnStateMove is called right after Animator.OnAnimatorMove()

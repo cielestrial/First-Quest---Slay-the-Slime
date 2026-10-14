@@ -3,15 +3,18 @@ using UnityEngine;
 
 public class IdleState : State
 {
-  public static new readonly string Name = "Idle";
-  public static new readonly int StateHash = Animator.StringToHash(Name);
-  public IdleState(UnitController unit, Animator animator, Transform transform)
-    : base(unit, animator, transform) { }
-
-
-  public override void OnEnter()
+  public new const string Name = "Idle";
+  public static new readonly int Hash = Animator.StringToHash(Name);
+  public IdleState(UnitController unit) : base(unit)
   {
-    myAnimator.SetBool(StateHash, true);
+    SetName(Name);
+    SetHash(Hash);
+  }
+
+  public override IEnumerator OnEnter()
+  {
+    animator.SetBool(base.Hash, true);
+    yield return base.OnEnter();
   }
 
   public override IEnumerator OnCoroutine()
@@ -19,11 +22,11 @@ public class IdleState : State
     yield return null;
   }
 
-  public override void OnExit()
+  public override IEnumerator OnExit()
   {
-    myAnimator.SetBool(StateHash, false);
+    animator.SetBool(base.Hash, false);
+    yield return base.OnExit();
   }
 
-  public override bool GuardCondition() => true;
-
+  public override bool CanEnter() => true;
 }

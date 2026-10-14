@@ -1,52 +1,95 @@
 using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
-
 
 public abstract class State
 {
-  public readonly string Name;
-  public readonly int StateHash;
-  protected readonly UnitController self;
-  protected readonly Animator myAnimator;
-  protected readonly Transform myTransform;
-
-  protected State(UnitController unit, Animator animator, Transform transform)
+  public string Name { get; protected set; }
+  public int Hash { get; protected set; }
+  protected readonly UnitController unit;
+  protected readonly Animator animator;
+  protected readonly Transform transform;
+  protected readonly GridManager gridManager;
+  protected readonly TargetingSystem targetingSystem;
+  protected readonly EventSystem eventSystem;
+  protected bool abortCoroutine;
+  protected State(UnitController unit)
   {
-    self = unit;
-    myAnimator = animator;
-    myTransform = transform;
+    this.unit = unit;
+    animator = unit.MyAnimator;
+    transform = unit.transform;
+    gridManager = unit.MyGridManager;
+    targetingSystem = unit.MyTargetingSystem;
+    eventSystem = unit.MyEventSystem;
   }
-
-  public abstract void OnEnter();
+  public void SetName(string name) { Name = name; }
+  public void SetHash(int hash) { Hash = hash; }
+  public virtual IEnumerator OnEnter()
+  {
+    yield return null;
+    abortCoroutine = false;
+  }
   public abstract IEnumerator OnCoroutine();
-  public abstract void OnExit();
-  public abstract bool GuardCondition();
+  public virtual IEnumerator OnExit()
+  {
+    abortCoroutine = true;
+    do
+      yield return null;
+    while (IsAnimationPlaying(Name));
+  }
+  public virtual bool CanEnter()
+    => unit.SkillTree.ContainsKey(Name) && unit.SufficientResources(unit.SkillCost[Name]);
+  public virtual bool CanExit() => true;
+
+  public bool IsAnimationPlaying(string animName) =>
+    animator.GetCurrentAnimatorStateInfo(0).IsName(animName) &&
+    animator.GetCurrentAnimatorStateInfo(0).normalizedTime < 1.0f;
 }
 
-public delegate bool Guard();
-
-public abstract class StateManager
+public abstract class NoClickState : State
 {
-  public State CurrentState { get; protected set; }
+  protected NoClickState(UnitController unit) : base(unit) { }
+}
 
-  protected StateManager(State initialState)
+// public abstract class FreeClickState : State
+// {
+//   protected FreeClickState(UnitController unit) : base(unit) { }
+//   public override IEnumerator OnCoroutine() { yield return RangeSelect(); }
+//   protected abstract IEnumerator RangeSelect();
+//   protected abstract IEnumerator Action(List<Vector2Int> path);
+// }
+
+public abstract class EmptyClickState : State
+{
+  protected EmptyClickState(UnitController unit) : base(unit) { }
+  public override IEnumerator OnCoroutine() { yield return RangeSelect(); }
+  protected abstract IEnumerator RangeSelect();
+  protected abstract IEnumerator Action(List<Vector2Int> path);
+}
+
+public abstract class EnemyClickState : State
+{
+  protected EnemyClickState(UnitController unit) : base(unit) { }
+  public override IEnumerator OnCoroutine() { yield return RangeSelect(); }
+  protected abstract IEnumerator RangeSelect();
+  protected abstract IEnumerator Action(Vector3 rangePos, List<Vector2Int> victims);
+  protected IEnumerator RotateIntoAction(Vector3 rangePos, int moveAnimHash)
   {
-    CurrentState = initialState;
-    CurrentState.OnEnter();
-  }
-
-  public bool IsIdle() => CurrentState.StateHash == IdleState.StateHash ||
-    CurrentState.StateHash == BlockState.StateHash;
-
-
-  public bool Transition(State to)
-  {
-    if (CurrentState.StateHash == to.StateHash) return false;
-    if (!to.GuardCondition()) return false;
-
-    CurrentState.OnExit();
-    CurrentState = to;
-    CurrentState.OnEnter();
-    return true;
+    Vector3 directionVector = rangePos - transform.position;
+    directionVector.y = 0f;
+    // avoid Quaternion.LookRotation error on a zero vector
+    if (directionVector.sqrMagnitude > 0.0001f)
+    {
+      Quaternion targetRotation = Quaternion.LookRotation(directionVector);
+      animator.SetBool(moveAnimHash, true);
+      while (transform.rotation != targetRotation)
+      {
+        transform.rotation = Quaternion.RotateTowards(transform.rotation, targetRotation, unit.TurnSpeed * Time.deltaTime);
+        if (transform.rotation != targetRotation)
+          yield return null;
+      }
+    }
+    animator.SetTrigger(Hash);
+    animator.SetBool(moveAnimHash, false);
   }
 }

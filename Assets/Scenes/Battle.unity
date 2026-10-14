@@ -361,6 +361,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 537b53fcd5a53a840916a5ee81848780, type: 3}
   m_Name: 
   m_EditorClassIdentifier: '::'
+  MyEventSystem: {fileID: 11400000, guid: dae2c32db2dcc6d4a90ef5463186cbae, type: 2}
+  MyTurnManager: {fileID: 1703385264}
   UnitButton: {fileID: 4291077044780688356, guid: 7383462619305554286f3471d28b3d26, type: 3}
   ActionButton: {fileID: 4291077044780688356, guid: 9bf493ece9d3a764893e21a1355e33b6, type: 3}
   UnitSelectParent: {fileID: 1781355139}
@@ -876,8 +878,8 @@ GameObject:
   - component: {fileID: 126839101}
   - component: {fileID: 126839100}
   m_Layer: 6
-  m_Name: South Range
-  m_TagString: Untagged
+  m_Name: West Range
+  m_TagString: West
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -1139,7 +1141,7 @@ GameObject:
   - component: {fileID: 160722550}
   m_Layer: 6
   m_Name: South Range
-  m_TagString: Untagged
+  m_TagString: South
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -1251,7 +1253,7 @@ GameObject:
   - component: {fileID: 169852844}
   m_Layer: 6
   m_Name: North Range
-  m_TagString: Untagged
+  m_TagString: North
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -1550,7 +1552,6 @@ GameObject:
   - component: {fileID: 330585544}
   - component: {fileID: 330585547}
   - component: {fileID: 330585548}
-  - component: {fileID: 330585549}
   m_Layer: 0
   m_Name: Main Camera
   m_TagString: MainCamera
@@ -1703,25 +1704,6 @@ MonoBehaviour:
   StartYaw: 0
   StartPitch: 45
   StartDistance: 20
---- !u!114 &330585549
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 330585543}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 81af8e083b46b564682d0a890d21ebd9, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: '::'
-  MaxRaycastDistance: 100
-  GridLayerMask:
-    serializedVersion: 2
-    m_Bits: 8
-  RangeLayerMask:
-    serializedVersion: 2
-    m_Bits: 64
 --- !u!1 &410087039
 GameObject:
   m_ObjectHideFlags: 0
@@ -3241,14 +3223,14 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::MapManager
   MyGridManager: {fileID: 11400000, guid: f68fbd9f951f19a4a97c788b59441c8b, type: 2}
-  GroundParent: {fileID: 3598706991198422126, guid: 9f42dcd2f683a1440a78fdd838bd0d03, type: 3}
+  GroundPivotPrefab: {fileID: 3598706991198422126, guid: 9f42dcd2f683a1440a78fdd838bd0d03, type: 3}
   CellParent: {fileID: 1158427222}
-  CubeCell: {fileID: 8356774922479172939, guid: aaef05dc437b3de4b923b01020bfca6c, type: 3}
-  QuadCell: {fileID: 4509345813125226907, guid: 64411550feeefa948934888e57dfb18d, type: 3}
-  Hero: {fileID: 6891573229702799710, guid: 7d803e11b5bc22048bdfc7dd0f2bd577, type: 3}
-  MyHeroParty: {fileID: 11400000, guid: bfa278baffd102c45b5fc89f20e2d009, type: 2}
-  Slime: {fileID: 899596918708435185, guid: e4787456b72c7324f9fab96d4cd06995, type: 3}
-  MySlimeParty: {fileID: 11400000, guid: 75170be2aabb6724ebce802700d78ed4, type: 2}
+  CubeCellPrefab: {fileID: 8356774922479172939, guid: aaef05dc437b3de4b923b01020bfca6c, type: 3}
+  QuadCellPrefab: {fileID: 4509345813125226907, guid: 64411550feeefa948934888e57dfb18d, type: 3}
+  HeroPrefab: {fileID: 6891573229702799710, guid: 7d803e11b5bc22048bdfc7dd0f2bd577, type: 3}
+  HeroParty: {fileID: 11400000, guid: bfa278baffd102c45b5fc89f20e2d009, type: 2}
+  SlimePrefab: {fileID: 899596918708435185, guid: e4787456b72c7324f9fab96d4cd06995, type: 3}
+  SlimeParty: {fileID: 11400000, guid: 75170be2aabb6724ebce802700d78ed4, type: 2}
 --- !u!4 &1345479123
 Transform:
   m_ObjectHideFlags: 0
@@ -3280,7 +3262,7 @@ GameObject:
   - component: {fileID: 1380504066}
   m_Layer: 6
   m_Name: East Range
-  m_TagString: Untagged
+  m_TagString: East
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -4171,7 +4153,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ffbf60903febdb445ab9626119bdcfe1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: '::'
-  isRangeVisible: 0
+  MyGridManager: {fileID: 11400000, guid: f68fbd9f951f19a4a97c788b59441c8b, type: 2}
+  MyEventSystem: {fileID: 11400000, guid: dae2c32db2dcc6d4a90ef5463186cbae, type: 2}
 --- !u!1 &1670378441
 GameObject:
   m_ObjectHideFlags: 0
@@ -4291,12 +4274,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: cab426620d3736c4aa7ab89ef0db0125, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::TurnManager
-  MyGridManager: {fileID: 11400000, guid: f68fbd9f951f19a4a97c788b59441c8b, type: 2}
-  MyTargetingSystem: {fileID: 330585549}
+  MyEventSystem: {fileID: 11400000, guid: dae2c32db2dcc6d4a90ef5463186cbae, type: 2}
   MyRangeManager: {fileID: 1654306742}
   MyHeroParty: {fileID: 11400000, guid: bfa278baffd102c45b5fc89f20e2d009, type: 2}
   MySlimeParty: {fileID: 11400000, guid: 75170be2aabb6724ebce802700d78ed4, type: 2}
-  SelectedUnit: {fileID: 0}
 --- !u!4 &1703385265
 Transform:
   m_ObjectHideFlags: 0

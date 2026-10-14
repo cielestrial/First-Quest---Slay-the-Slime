@@ -5,7 +5,8 @@ using UnityEngine.UI;
 
 public class UIManager : MonoBehaviour
 {
-  public static UIManager Instance { get; private set; }
+  [SerializeField] private EventSystem MyEventSystem;
+  [SerializeField] private TurnManager MyTurnManager;
   public Button UnitButton;
   public Button ActionButton;
   public Transform UnitSelectParent;
@@ -20,14 +21,17 @@ public class UIManager : MonoBehaviour
   public TMP_Text ActionInfoDisplay;
   public TMP_Text ActionDescriptionDisplay;
 
-  void Awake()
+  void Start()
   {
-    if (Instance != null && Instance != this)
-    {
-      Destroy(gameObject);
-      return;
-    }
-    Instance = this;
+    MyEventSystem.MyUIEvent.AddListener(this);
+  }
+  void OnEnable()
+  {
+    MyEventSystem.MyUIEvent.AddListener(this);
+  }
+  void OnDisable()
+  {
+    MyEventSystem.MyUIEvent?.RemoveListener(this);
   }
 
   public void AddUnitSelectionButton(UnitController unit)
@@ -63,7 +67,7 @@ public class UIManager : MonoBehaviour
         AddActionSelectionButton(unit, action);
       return;
     }
-    UnitController prevUnit = TurnManager.Instance.SelectedUnit;
+    UnitController prevUnit = MyTurnManager.SelectedUnit;
     if (prevUnit != null && prevUnit.UnitName == unit.UnitName)
     {
       if (prevUnit.CurrentLevel == unit.CurrentLevel) // No change
@@ -91,12 +95,12 @@ public class UIManager : MonoBehaviour
     ActionSelect _button = Instantiate(ActionButton, UnitActionsParent).GetComponent<ActionSelect>();
     _button.ButtonLabel.text = action.Key;
     _button.SetActionDetails(action.Key, action.Value, unit.SkillDesc[action.Key]);
-    _button.Button.onClick.RemoveAllListeners();
-    _button.Button.onClick.AddListener(() =>
+    _button.MyButton.onClick.RemoveAllListeners();
+    _button.MyButton.onClick.AddListener(() =>
     {
       ActionInfoDisplay.text = _button.GetActionInfo();
       ActionDescriptionDisplay.text = _button.GetActionDescription();
-      unit.PerformAction(action.Key);
+      StartCoroutine(unit.PerformAction(action.Key));
     });
     AddToActionSelection(_button);
   }

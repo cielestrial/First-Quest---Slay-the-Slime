@@ -1,17 +1,21 @@
 using System.Collections;
 using UnityEngine;
 
-public class BlockState : State
+public class BlockState : NoClickState
 {
-  public static new readonly string Name = "Block";
-  public static new readonly int StateHash = Animator.StringToHash(Name);
-  public BlockState(UnitController unit, Animator animator, Transform transform)
-    : base(unit, animator, transform) { }
-
-
-  public override void OnEnter()
+  public new const string Name = "Block";
+  public static new readonly int Hash = Animator.StringToHash(Name);
+  public BlockState(UnitController unit) : base(unit)
   {
-    myAnimator.SetBool(StateHash, true);
+    SetName(Name);
+    SetHash(Hash);
+  }
+
+  public override IEnumerator OnEnter()
+  {
+    animator.SetBool(IdleState.Hash, true);
+    animator.SetBool(base.Hash, true);
+    yield return base.OnEnter();
   }
 
   public override IEnumerator OnCoroutine()
@@ -19,14 +23,10 @@ public class BlockState : State
     yield return null;
   }
 
-  public override void OnExit()
+  public override IEnumerator OnExit()
   {
-    myAnimator.SetBool(StateHash, false);
+    animator.SetBool(base.Hash, false);
+    animator.SetBool(IdleState.Hash, false);
+    yield return base.OnExit();
   }
-
-  public override bool GuardCondition()
-  {
-    return self.SkillTree.ContainsKey(Name);
-  }
-
 }

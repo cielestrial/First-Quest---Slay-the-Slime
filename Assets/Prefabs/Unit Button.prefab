@@ -272,6 +272,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7bb3bb16b64015c4a8dc28db580bd0f1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: '::'
+  MyEventSystem: {fileID: 11400000, guid: dae2c32db2dcc6d4a90ef5463186cbae, type: 2}
 --- !u!114 &217892403086339475
 MonoBehaviour:
   m_ObjectHideFlags: 0

@@ -1,10 +1,7 @@
 using UnityEngine;
 
-public class ClipSetup : MonoBehaviour
+public static class ClipSetup
 {
-  // [SerializeField] private Renderer groundRenderer;
-  // [SerializeField] private GameObject rangeRoot; // parent whose children get clipped
-
   public static void SetupClipBounds(Renderer groundRenderer, GameObject rangeParent)
   {
     Bounds groundBounds = groundRenderer.bounds;
@@ -15,7 +12,7 @@ public class ClipSetup : MonoBehaviour
     ApplyBoundsToChildren(rangeParent, minBounds, maxBounds);
   }
 
-  static void ApplyBoundsToChildren(GameObject root, Vector2 min, Vector2 max)
+  private static void ApplyBoundsToChildren(GameObject root, Vector2 min, Vector2 max)
   {
     Renderer[] renderers = root.GetComponentsInChildren<Renderer>();
     foreach (Renderer r in renderers)

@@ -6,7 +6,7 @@ public class UnitStatsDisplay : MonoBehaviour
 {
   [SerializeField] private string StatName;
   public int StatValue { get; private set; }
-  public Slider Slider { get; private set; }
+  public Slider MySlider { get; private set; }
   public TMP_Text Text { get; private set; }
   private float visualOffset;
 
@@ -14,7 +14,7 @@ public class UnitStatsDisplay : MonoBehaviour
   {
     // StatName = StatName.ToUpper();
     Text = transform.GetChild(0).GetComponent<TMP_Text>();
-    Slider = transform.GetChild(1).GetComponent<Slider>();
+    MySlider = transform.GetChild(1).GetComponent<Slider>();
   }
 
   public string GetStatName() => StatName;
@@ -26,15 +26,15 @@ public class UnitStatsDisplay : MonoBehaviour
     if (_value > 0)
     {
       visualOffset = 15f * (_total - _value) / _total;
-      Slider.value = Mathf.Ceil(_value * 100f / _total + visualOffset);
+      MySlider.value = Mathf.Ceil(_value * 100f / _total + visualOffset);
     }
     else
-      Slider.value = 0;
+      MySlider.value = 0;
   }
 
   public void Reset()
   {
     Text.text = StatName;
-    Slider.value = 0;
+    MySlider.value = 0;
   }
 }

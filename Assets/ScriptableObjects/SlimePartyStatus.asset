@@ -13,5 +13,4 @@ MonoBehaviour:
   m_Name: SlimePartyStatus
   m_EditorClassIdentifier: Assembly-CSharp::SlimePartyStatus
   isPlaying: 0
-  Slime1HP: 100
-  Slime2HP: 100
+  MyEventSystem: {fileID: 11400000, guid: dae2c32db2dcc6d4a90ef5463186cbae, type: 2}

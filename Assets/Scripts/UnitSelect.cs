@@ -6,31 +6,32 @@ using UnityEngine.UI;
 [RequireComponent(typeof(RectTransform))]
 public class UnitSelect : MonoBehaviour
 {
-  public Button Button { get; private set; }
+  public Button MyButton { get; private set; }
   public string UnitName { get; private set; }
   public TMP_Text ButtonLabel { get; private set; }
   public UnitController ControlledUnit { get; private set; }
+  [SerializeField] private EventSystem MyEventSystem;
 
   private Camera mainCamera;
 
   public
   void Awake()
   {
-    Button = GetComponent<Button>();
+    MyButton = GetComponent<Button>();
     ButtonLabel = transform.GetChild(0).GetComponent<TMP_Text>();
     mainCamera = Camera.main;
   }
   public void BindUnit(UnitController unit)
   {
+    MyButton.onClick.RemoveAllListeners();
     ControlledUnit = unit;
-    SetLabel();
-    Button.onClick.RemoveAllListeners();
-    Button.onClick.AddListener(() =>
+    SetLabel(unit);
+    MyButton.onClick.AddListener(() =>
     {
-      TurnManager.Instance.SelectedUnit = unit;
-      UIManager.Instance.UpdateUnitInfoPanel(unit);
-      UIManager.Instance.ShowActions(unit);
-      UIManager.Instance.ClearActionDescription();
+      MyEventSystem.MyTurnEvent.UnitSelected(unit);
+      MyEventSystem.MyUIEvent.UpdateUnitInfo(unit);
+      MyEventSystem.MyUIEvent.ShowActions(unit);
+      MyEventSystem.MyUIEvent.ClearActionDescription();
 
       // Focus camera
       mainCamera.transform.position = new Vector3(
@@ -38,13 +39,12 @@ public class UnitSelect : MonoBehaviour
         mainCamera.transform.position.y,
         unit.transform.position.z - (25.2f - 9.8f)
       );
-      unit.SetTurn();
     });
   }
 
-  private void SetLabel()
+  private void SetLabel(UnitController unit)
   {
-    UnitName = ControlledUnit.UnitName;
-    ButtonLabel.text = ControlledUnit.UnitName;
+    UnitName = unit.UnitName;
+    ButtonLabel.text = unit.UnitName;
   }
 }

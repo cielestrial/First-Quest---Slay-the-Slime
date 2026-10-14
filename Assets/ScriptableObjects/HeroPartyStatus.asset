@@ -13,5 +13,4 @@ MonoBehaviour:
   m_Name: HeroPartyStatus
   m_EditorClassIdentifier: Assembly-CSharp::HeroPartyStatus
   isPlaying: 1
-  SwordsmanHP: 100
-  SwordswomanHP: 80
+  MyEventSystem: {fileID: 11400000, guid: dae2c32db2dcc6d4a90ef5463186cbae, type: 2}

@@ -16,10 +16,10 @@ namespace States.Knight
       SetHash(Hash);
     }
 
-    public override IEnumerator OnEnter()
+    public override void OnEnter()
     {
-      eventSystem.MyRangeEvent.ShowRange(transform.position, unit.SkillRange[base.Name]);
-      yield return base.OnEnter();
+      base.OnEnter();
+      eventBus.MyRangeEvent.ShowRange(transform.position, unit.SkillRange[base.Name]);
     }
 
     protected override IEnumerator RangeSelect()
@@ -55,7 +55,7 @@ namespace States.Knight
         yield return null;
       }
 
-      eventSystem.MyRangeEvent.HideRange();
+      eventBus.MyRangeEvent.HideRange();
       if (aoe.Count > 0)
         yield return Action(rangePos, aoe);
     }
@@ -65,19 +65,19 @@ namespace States.Knight
       // Turn towards selected range
       yield return RotateIntoAction(rangePos, MoveState.Hash);
       // Trigger damage via new Battle Event
-      // eventSystem.BattleEvent.Damage(victims);
+      // eventBus.BattleEvent.Damage(victims);
       yield return null;
       unit.ConsumeResources(unit.SkillCost[base.Name]);
       yield return null;
       // Action chosen
-      eventSystem.MyTurnEvent.ActionTaken();
+      eventBus.MyTurnEvent.ActionTaken();
     }
 
     public override IEnumerator OnExit()
     {
       while (IsAnimationPlaying(MoveState.Name))
         yield return null;
-      yield return base.OnExit();
+      base.OnExit();
     }
   }
 }

@@ -7,7 +7,7 @@ public class SlimeController : UnitController
   public override int GetCurrentAP() => CurrentAP;
   public override int GetTotalAP() => TotalAP;
 
-  void Awake()
+  public override void Setup()
   {
     UnitName = "Slime";
   }

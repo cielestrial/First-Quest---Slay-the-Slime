@@ -3,50 +3,60 @@ using UnityEngine;
 
 public class TurnManager : MonoBehaviour
 {
-  [SerializeField] private EventSystem MyEventSystem;
-  [SerializeField] private RangeManager MyRangeManager;
+  private EventBus eventBus;
   // Start is called once before the first execution of Update after the MonoBehaviour is created
-  [SerializeField] private HeroPartyStatus MyHeroParty;
-  [SerializeField] private SlimePartyStatus MySlimeParty;
+  private HeroPartyStatus heroParty;
+  private SlimePartyStatus slimeParty;
   public UnitController SelectedUnit { get; private set; } = null; // all units in turn order, player + AI mixed
   public bool PlayerTurn { get; private set; }
   public int PlayerTurnCount { get; private set; } = 0;
   public const float GameSpeed = 1.3f;
-
+  private Coroutine mainCoroutine;
+  private Coroutine unitCoroutine;
   private static readonly WaitForSeconds waitForSeconds = new(1f);
 
-  void Start()
+  public void AddDependencies(
+    EventBus eventBus,
+    SlimePartyStatus slimeParty,
+    HeroPartyStatus heroParty
+    )
   {
-    MyEventSystem.MyTurnEvent.AddListener(this);
-    PlayerTurn = MySlimeParty.isPlaying;
-    StartCoroutine(RunTurns());
+    this.eventBus = eventBus;
+    this.slimeParty = slimeParty;
+    this.heroParty = heroParty;
+  }
+  public void ClearDependencies()
+  {
+    heroParty = null;
+    slimeParty = null;
+    eventBus = null;
+  }
+  public void AddListener()
+  {
+    eventBus.MyTurnEvent?.AddListener(this);
+  }
+  public void RemoveListener()
+  {
+    eventBus.MyTurnEvent?.RemoveListener(this);
   }
 
-  void OnEnable()
+  public void StartBattle()
   {
-    MyEventSystem.MyTurnEvent.AddListener(this);
+    // Slimes get first move
+    PlayerTurn = slimeParty.IsPlaying;
+    mainCoroutine = StartCoroutine(RunTurns());
   }
-
-  void OnDisable()
+  public void StopBattle()
   {
+    StopCoroutine(mainCoroutine);
     StopAllCoroutines();
-    MyEventSystem.MyTurnEvent?.RemoveListener(this);
     PlayerTurn = false;
   }
 
   private bool IsGameOver()
-  {
-    if (MyHeroParty.isPlaying)
-    {
-      return MyHeroParty.GetPartyHp() <= 0;
-    }
-    else if (MySlimeParty.isPlaying)
-    {
-      return MySlimeParty.GetPartyHp() <= 0;
-    }
-    else
-      return false;
-  }
+  => heroParty.IsPlaying && heroParty.GetPartyHp() <= 0 ||
+  slimeParty.IsPlaying && slimeParty.GetPartyHp() <= 0;
+
 
   IEnumerator RunTurns()
   {
@@ -79,36 +89,9 @@ public class TurnManager : MonoBehaviour
       while (SelectedUnit.IsInIdleOrBlockState())
         yield return null;
 
-      MyEventSystem.Snapshot();
-      yield return StartCoroutine(SelectedUnit.CurrentStateCoroutine());
-      /* 
-      Action selected:
-      * NoClick = 1,
-      * FreeClick = 2,
-      * EmptyClick = 3,
-      * EnemyClick = 4
-      */
-      // switch (SelectedUnit.CurrentActionType)
-      // {
-      //   case UnitController.ActionType.NoClick:
-      //     SelectedUnit.NoClick();
-      //     break;
-
-      //   case UnitController.ActionType.FreeClick:
-      //     yield return StartCoroutine(WaitForGridSelection(false));
-      //     break;
-
-      //   case UnitController.ActionType.EmptyClick:
-      //     yield return StartCoroutine(WaitForGridSelection(true));
-      //     break;
-
-      //   case UnitController.ActionType.EnemyClick:
-      //     yield return StartCoroutine(WaitForGridSelection(true));
-      //     break;
-
-      //   default:
-      //     break;
-      // }
+      eventBus.Snapshot();
+      unitCoroutine = StartCoroutine(SelectedUnit.CurrentStateCoroutine());
+      yield return unitCoroutine;
     }
 
     IEnumerator WaitForEnemy()
@@ -126,10 +109,12 @@ public class TurnManager : MonoBehaviour
   public void RegisterUnit(UnitController unit) { SelectedUnit = unit; }
   public void UnregisterUnit() { SelectedUnit = null; }
 
+  public void StopUnitCoroutine() { StopCoroutine(unitCoroutine); }
+
   public void AfterAction()
   {
     StartCoroutine(SelectedUnit.PerformAction(IdleState.Name));
-    MyEventSystem.MyUIEvent.UpdateUnitInfo(SelectedUnit);
+    eventBus.MyUIEvent.UpdateUnitInfo(SelectedUnit);
     if (SelectedUnit.GetCurrentAP() == 0)
       EndPlayerTurn();
   }
@@ -139,8 +124,8 @@ public class TurnManager : MonoBehaviour
     PlayerTurnCount++;
     PlayerTurn = false;
     SelectedUnit.ResetCurrentAP();
-    MyEventSystem.MyUIEvent.ClearUnitInfoPanel();
-    MyEventSystem.MyUIEvent.ClearUnitActionsPanel();
+    eventBus.MyUIEvent.ClearUnitInfoPanel();
+    eventBus.MyUIEvent.ClearUnitActionsPanel();
     UnregisterUnit();
   }
 }

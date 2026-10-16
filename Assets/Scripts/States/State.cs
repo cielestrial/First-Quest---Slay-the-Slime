@@ -11,7 +11,7 @@ public abstract class State
   protected readonly Transform transform;
   protected readonly GridManager gridManager;
   protected readonly TargetingSystem targetingSystem;
-  protected readonly EventSystem eventSystem;
+  protected readonly EventBus eventBus;
   protected bool abortCoroutine;
   protected State(UnitController unit)
   {
@@ -20,22 +20,20 @@ public abstract class State
     transform = unit.transform;
     gridManager = unit.MyGridManager;
     targetingSystem = unit.MyTargetingSystem;
-    eventSystem = unit.MyEventSystem;
+    eventBus = unit.MyEventBus;
   }
   public void SetName(string name) { Name = name; }
   public void SetHash(int hash) { Hash = hash; }
-  public virtual IEnumerator OnEnter()
+  public virtual void OnEnter()
   {
-    yield return null;
     abortCoroutine = false;
   }
   public abstract IEnumerator OnCoroutine();
   public virtual IEnumerator OnExit()
   {
     abortCoroutine = true;
-    do
+    while (IsAnimationPlaying(Name))
       yield return null;
-    while (IsAnimationPlaying(Name));
   }
   public virtual bool CanEnter()
     => unit.SkillTree.ContainsKey(Name) && unit.SufficientResources(unit.SkillCost[Name]);

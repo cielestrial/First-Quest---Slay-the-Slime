@@ -11,21 +11,21 @@ public class IdleState : State
     SetHash(Hash);
   }
 
-  public override IEnumerator OnEnter()
+  public override void OnEnter()
   {
+    base.OnEnter();
     animator.SetBool(base.Hash, true);
-    yield return base.OnEnter();
   }
 
   public override IEnumerator OnCoroutine()
   {
-    yield return null;
+    return null;
   }
 
   public override IEnumerator OnExit()
   {
     animator.SetBool(base.Hash, false);
-    yield return base.OnExit();
+    return base.OnExit();
   }
 
   public override bool CanEnter() => true;

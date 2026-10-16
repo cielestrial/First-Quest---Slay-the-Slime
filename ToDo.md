@@ -6,12 +6,12 @@
 - Advanced Camera
 
 [Design]
+- unit tests (UTF)
 
-- complete State machine
-- complete event system communication to replace singletons
-- scene builder to guarantee execution order
-- dependency injection
-- unit tests
+[Tools]
+- reflex/vcontainer
+- UnityTask
+- DoTween & Litmotion
 
 [Troubleshooting]
 

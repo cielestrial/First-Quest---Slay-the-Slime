@@ -10,16 +10,13 @@ public class UnitSelect : MonoBehaviour
   public string UnitName { get; private set; }
   public TMP_Text ButtonLabel { get; private set; }
   public UnitController ControlledUnit { get; private set; }
-  [SerializeField] private EventSystem MyEventSystem;
-
-  private Camera mainCamera;
+  [SerializeField] private EventBus MyEventBus;
 
   public
   void Awake()
   {
     MyButton = GetComponent<Button>();
     ButtonLabel = transform.GetChild(0).GetComponent<TMP_Text>();
-    mainCamera = Camera.main;
   }
   public void BindUnit(UnitController unit)
   {
@@ -28,17 +25,12 @@ public class UnitSelect : MonoBehaviour
     SetLabel(unit);
     MyButton.onClick.AddListener(() =>
     {
-      MyEventSystem.MyTurnEvent.UnitSelected(unit);
-      MyEventSystem.MyUIEvent.UpdateUnitInfo(unit);
-      MyEventSystem.MyUIEvent.ShowActions(unit);
-      MyEventSystem.MyUIEvent.ClearActionDescription();
+      MyEventBus.MyTurnEvent.UnitSelected(unit);
+      MyEventBus.MyUIEvent.UpdateUnitInfo(unit);
+      MyEventBus.MyUIEvent.ShowActions(unit);
+      MyEventBus.MyUIEvent.ClearActionDescription();
 
-      // Focus camera
-      mainCamera.transform.position = new Vector3(
-        unit.transform.position.x,
-        mainCamera.transform.position.y,
-        unit.transform.position.z - (25.2f - 9.8f)
-      );
+      MyEventBus.MyTargetEvent.FocusCameraOn(unit);
     });
   }
 

@@ -4,7 +4,6 @@ using UnityEngine;
 [CreateAssetMenu(fileName = "GridManager", menuName = "Scriptable Objects/GridManager")]
 public class GridManager : ScriptableObject
 {
-  public MapFactory MyMapFactory { get; private set; } = null;
   public Vector3[,] LocationGrid { get; private set; }
   public int[,] DetectionGrid { get; private set; }
   public enum DetectionType
@@ -24,7 +23,7 @@ public class GridManager : ScriptableObject
   public const float SpacingX = 0.1f;
   public const float SpacingZ = 0.4f;
 
-  void OnEnable()
+  public void CreateGrid()
   {
     // Initialize
     PhaseMaxRowSize = (Phase * 2 - 1) * DefaultRowSize;
@@ -40,8 +39,6 @@ public class GridManager : ScriptableObject
         DetectionGrid[x, y] = (int)DetectionType.Nothing;
       }
     }
-    // For testing
-    DetectionGrid[0 + DefaultRowSize * 2, 6 + DefaultRowSize * 2] = (int)DetectionType.Enemy;
   }
 
   public static Vector2Int ConvertIndexToVector2Int(int index)
@@ -146,24 +143,19 @@ public class GridManager : ScriptableObject
     return potentialVictims;
   }
 
-  public void AttachMapFactory(MapFactory mapFactory)
-  {
-    MyMapFactory = mapFactory;
-  }
-
-  public void NextPhase()
-  {
-    if (MyMapFactory == null)
-    {
-      Debug.Log("No Map Factory");
-      return;
-    }
-    if (Phase + 1 <= MaxPhases)
-    {
-      Phase++;
-      MyMapFactory.ScaleGround();
-    }
-  }
+  // public void NextPhase()
+  // {
+  //   if (MyMapFactory == null)
+  //   {
+  //     Debug.Log("No Map Factory");
+  //     return;
+  //   }
+  //   if (Phase + 1 <= MaxPhases)
+  //   {
+  //     Phase++;
+  //     MyMapFactory.ScaleGround();
+  //   }
+  // }
 
   public int[] GetLocationArrayPhase1()
   {

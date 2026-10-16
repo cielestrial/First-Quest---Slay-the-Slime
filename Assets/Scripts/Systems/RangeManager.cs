@@ -5,8 +5,8 @@ using UnityEngine;
 public class RangeManager : MonoBehaviour
 {
   private MapFactory mapFactory;
-  [SerializeField] private GridManager MyGridManager;
-  [SerializeField] private EventSystem MyEventSystem;
+  private GridManager gridManager;
+  private EventBus eventBus;
   public static readonly Vector3 PivotOffset = new(-0.5f, 0f, -0.5f);
   public static readonly Vector2Int[] Cardinals2D =
     { Vector2Int.up, Vector2Int.right, Vector2Int.down, Vector2Int.left };
@@ -14,27 +14,37 @@ public class RangeManager : MonoBehaviour
   { Vector3Int.forward, Vector3Int.right, Vector3Int.back, Vector3Int.left };
   private static readonly int cardinalCount = Cardinals2D.Length;
   private readonly Transform[] rangePivots = new Transform[cardinalCount];
-
-  void Awake()
+  public void AddDependencies(
+    MapFactory mapFactory,
+    EventBus eventBus,
+    GridManager gridManager
+    )
   {
-    mapFactory = transform.parent.GetComponent<MapFactory>();
+    this.mapFactory = mapFactory;
+    this.eventBus = eventBus;
+    this.gridManager = gridManager;
+  }
+  public void ClearDependencies()
+  {
+    gridManager = null;
+    eventBus = null;
+    mapFactory = null;
+  }
 
+  public void Setup()
+  {
     for (int index = 0; index < cardinalCount; ++index)
       rangePivots[index] = transform.GetChild(index);
 
     HideRanges();
   }
-  void Start()
+  public void AddListener()
   {
-    MyEventSystem.MyRangeEvent.AddListener(this);
+    eventBus.MyRangeEvent?.AddListener(this);
   }
-  void OnEnable()
+  public void RemoveListener()
   {
-    MyEventSystem.MyRangeEvent.AddListener(this);
-  }
-  void OnDisable()
-  {
-    MyEventSystem.MyRangeEvent?.RemoveListener(this);
+    eventBus.MyRangeEvent?.RemoveListener(this);
   }
   public void ClipRanges()
   {
@@ -55,7 +65,7 @@ public class RangeManager : MonoBehaviour
       cardinalGridLocation = center + Cardinals2D[index];
       if (GridManager.ValidGridLocation(cardinalGridLocation))
       {
-        cardinalWorldLocation = MyGridManager.LocationGrid[cardinalGridLocation.x, cardinalGridLocation.y];
+        cardinalWorldLocation = gridManager.LocationGrid[cardinalGridLocation.x, cardinalGridLocation.y];
         _range.position = cardinalWorldLocation + Vector3.Scale(PivotOffset, Cardinals3D[index]);
       }
       else

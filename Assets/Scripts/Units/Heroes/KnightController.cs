@@ -4,7 +4,7 @@ using UnityEngine;
 [RequireComponent(typeof(Animator))]
 public class KnightController : HeroController
 {
-  void Awake()
+  public override void Setup()
   {
     UnitName = "Knight";
     MyAnimator = GetComponent<Animator>();

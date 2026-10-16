@@ -5,8 +5,8 @@ using UnityEngine.UI;
 
 public class UIManager : MonoBehaviour
 {
-  [SerializeField] private EventSystem MyEventSystem;
-  [SerializeField] private TurnManager MyTurnManager;
+  private EventBus eventBus;
+  // [SerializeField] private TurnManager MyTurnManager;
   public Button UnitButton;
   public Button ActionButton;
   public Transform UnitSelectParent;
@@ -20,18 +20,23 @@ public class UIManager : MonoBehaviour
   public UnitStatsDisplay HPDisplay, MPDisplay, APDisplay;
   public TMP_Text ActionInfoDisplay;
   public TMP_Text ActionDescriptionDisplay;
+  private UnitController prevUnit = null;
 
-  void Start()
+  public void AddDependencies(EventBus eventBus)
   {
-    MyEventSystem.MyUIEvent.AddListener(this);
+    this.eventBus = eventBus;
   }
-  void OnEnable()
+  public void ClearDependencies()
   {
-    MyEventSystem.MyUIEvent.AddListener(this);
+    eventBus = null;
   }
-  void OnDisable()
+  public void AddListener()
   {
-    MyEventSystem.MyUIEvent?.RemoveListener(this);
+    eventBus.MyUIEvent?.AddListener(this);
+  }
+  public void RemoveListener()
+  {
+    eventBus.MyUIEvent?.RemoveListener(this);
   }
 
   public void AddUnitSelectionButton(UnitController unit)
@@ -67,7 +72,6 @@ public class UIManager : MonoBehaviour
         AddActionSelectionButton(unit, action);
       return;
     }
-    UnitController prevUnit = MyTurnManager.SelectedUnit;
     if (prevUnit != null && prevUnit.UnitName == unit.UnitName)
     {
       if (prevUnit.CurrentLevel == unit.CurrentLevel) // No change
@@ -85,6 +89,8 @@ public class UIManager : MonoBehaviour
 
       foreach (KeyValuePair<string, int> action in unit.SkillTree)
         AddActionSelectionButton(unit, action);
+
+      prevUnit = unit;
     }
   }
 

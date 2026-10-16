@@ -12,5 +12,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 61f094da637e4a94893fb861ceef0b90, type: 3}
   m_Name: HeroPartyStatus
   m_EditorClassIdentifier: Assembly-CSharp::HeroPartyStatus
-  isPlaying: 1
-  MyEventSystem: {fileID: 11400000, guid: dae2c32db2dcc6d4a90ef5463186cbae, type: 2}
+  IsPlaying: 0
+  KnightPrefab: {fileID: 510016061703517859, guid: 7d803e11b5bc22048bdfc7dd0f2bd577, type: 3}
+  MagePrefab: {fileID: 0}
+  ArcherPrefab: {fileID: 0}
+  RoguePrefab: {fileID: 0}

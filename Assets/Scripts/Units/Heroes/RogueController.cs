@@ -1,7 +1,7 @@
 
 public class RogueController : HeroController
 {
-  void Awake()
+  public override void Setup()
   {
     UnitName = "Rogue";
     // Level Requirement to learn

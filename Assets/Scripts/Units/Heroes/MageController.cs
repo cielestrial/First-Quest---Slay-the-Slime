@@ -1,7 +1,7 @@
 
 public class MageController : HeroController
 {
-  void Awake()
+  public override void Setup()
   {
     UnitName = "Mage";
     // Level Requirement to learn

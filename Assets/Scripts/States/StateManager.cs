@@ -31,8 +31,9 @@ public abstract class StateManager
     if (CurrentState.Hash != to.Hash && CurrentState.CanExit() && to.CanEnter())
     {
       yield return CurrentState.OnExit();
+      // yield return null;
       CurrentState = to;
-      yield return CurrentState.OnEnter();
+      CurrentState.OnEnter();
     }
   }
 }

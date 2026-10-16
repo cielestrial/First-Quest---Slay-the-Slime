@@ -4,9 +4,9 @@ using UnityEngine;
 
 public abstract class UnitController : MonoBehaviour
 {
-  public GridManager MyGridManager;
-  public TargetingSystem MyTargetingSystem;
-  public EventSystem MyEventSystem;
+  public GridManager MyGridManager { get; private set; }
+  public TargetingSystem MyTargetingSystem { get; private set; }
+  public EventBus MyEventBus { get; private set; }
   public readonly int MoveSpeed = Mathf.RoundToInt(5 * TurnManager.GameSpeed);
   public readonly int TurnSpeed = Mathf.RoundToInt(315 * 1.75f * TurnManager.GameSpeed);
   public UnitSelect UnitSelectButton { get; protected set; }
@@ -66,6 +66,18 @@ public abstract class UnitController : MonoBehaviour
   public Dictionary<string, Vector2Int> SkillRange { get; protected set; } = new(15);
 
   public AwakeningSkills Awakening { get; protected set; }
+
+  public abstract void Setup();
+  public void AddDependencies(
+    EventBus eventBus,
+    GridManager gridManager,
+    TargetingSystem targetingSystem
+    )
+  {
+    MyEventBus = eventBus;
+    MyGridManager = gridManager;
+    MyTargetingSystem = targetingSystem;
+  }
 
   public virtual int GetCurrentAP() => CurrentAP;
   public virtual int GetTotalAP() => TotalAP;

@@ -1,7 +1,7 @@
 
 public class ArcherController : HeroController
 {
-  void Awake()
+  public override void Setup()
   {
     UnitName = "Archer";
     // Level Requirement to learn

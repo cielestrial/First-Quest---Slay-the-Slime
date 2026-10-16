@@ -15,6 +15,11 @@ namespace EventSys.Events
       foreach (TurnManager listener in Listeners)
         listener.AfterAction();
     }
+    public void StopUnitCoroutine()
+    {
+      foreach (TurnManager listener in Listeners)
+        listener.StopUnitCoroutine();
+    }
   }
 
 }

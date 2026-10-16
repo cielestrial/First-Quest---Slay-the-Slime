@@ -12,5 +12,5 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4513e9ced1f056f4e9894a850563ed87, type: 3}
   m_Name: SlimePartyStatus
   m_EditorClassIdentifier: Assembly-CSharp::SlimePartyStatus
-  isPlaying: 0
-  MyEventSystem: {fileID: 11400000, guid: dae2c32db2dcc6d4a90ef5463186cbae, type: 2}
+  IsPlaying: 0
+  SlimePrefab: {fileID: 4256976042673323913, guid: e4787456b72c7324f9fab96d4cd06995, type: 3}

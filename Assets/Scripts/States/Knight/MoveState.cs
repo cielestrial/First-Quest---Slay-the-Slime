@@ -16,10 +16,10 @@ namespace States.Knight
       SetHash(Hash);
     }
 
-    public override IEnumerator OnEnter()
+    public override void OnEnter()
     {
-      eventSystem.MyRangeEvent.ShowRange(transform.position, unit.SkillRange[base.Name]);
-      yield return base.OnEnter();
+      base.OnEnter();
+      eventBus.MyRangeEvent.ShowRange(transform.position, unit.SkillRange[base.Name]);
     }
 
     protected override IEnumerator RangeSelect()
@@ -47,7 +47,7 @@ namespace States.Knight
         yield return null;
       }
 
-      eventSystem.MyRangeEvent.HideRange();
+      eventBus.MyRangeEvent.HideRange();
       if (path.Count > 0)
         yield return Action(path);
     }
@@ -85,13 +85,13 @@ namespace States.Knight
       unit.ConsumeResources(unit.SkillCost[base.Name]);
       // Action chosen
       yield return null;
-      eventSystem.MyTurnEvent.ActionTaken();
+      eventBus.MyTurnEvent.ActionTaken();
     }
 
     public override IEnumerator OnExit()
     {
       animator.SetBool(base.Hash, false);
-      yield return base.OnExit();
+      return base.OnExit();
     }
 
     public override bool CanExit()

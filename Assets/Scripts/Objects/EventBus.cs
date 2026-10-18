@@ -1,8 +1,6 @@
 using UnityEngine;
 using EventSys.Events;
-using UnityEditor;
 using System.Collections.Generic;
-using Unity.VisualScripting;
 
 [CreateAssetMenu(fileName = "EventBus", menuName = "Scriptable Objects/EventBus")]
 public class EventBus : ScriptableObject
@@ -13,26 +11,31 @@ public class EventBus : ScriptableObject
   public TargetEvent MyTargetEvent { get; private set; }
   public BattleEvent MyBattleEvent { get; private set; }
 
-  [SerializeField] private List<Object> RangeEventListeners;
-  [SerializeField] private List<Object> TurnEventListeners;
-  [SerializeField] private List<Object> UIEventListeners;
-  [SerializeField] private List<Object> TargetEventListeners;
-  [SerializeField] private List<Object> BattleEventListeners;
+  [SerializeField] private List<GameObject> RangeEventListeners;
+  [SerializeField] private List<GameObject> TurnEventListeners;
+  [SerializeField] private List<GameObject> UIEventListeners;
+  [SerializeField] private List<ScriptableObject> TargetEventListeners;
+  [SerializeField] private List<ScriptableObject> BattleEventListeners;
 
-  public void AddEvents()
+  public void SetUp()
+  {
+    AddEvents();
+  }
+  public void TearDown()
+  {
+    ClearEvents();
+  }
+
+  void AddEvents()
   {
     MyRangeEvent = new(1);
     RangeEventListeners = new(1);
-
     MyTurnEvent = new(1);
     TurnEventListeners = new(1);
-
     MyUIEvent = new(1);
     UIEventListeners = new(1);
-
     MyTargetEvent = new(1);
     TargetEventListeners = new(1);
-
     MyBattleEvent = new(1);
     BattleEventListeners = new(1);
   }
@@ -41,15 +44,15 @@ public class EventBus : ScriptableObject
   {
     RangeEventListeners.Clear();
     foreach (RangeManager rm in MyRangeEvent.Listeners)
-      RangeEventListeners.Add(rm.GameObject());
+      RangeEventListeners.Add(rm.gameObject);
 
     TurnEventListeners.Clear();
     foreach (TurnManager tm in MyTurnEvent.Listeners)
-      TurnEventListeners.Add(tm.GameObject());
+      TurnEventListeners.Add(tm.gameObject);
 
     UIEventListeners.Clear();
     foreach (UIManager uim in MyUIEvent.Listeners)
-      UIEventListeners.Add(uim);
+      UIEventListeners.Add(uim.gameObject);
 
     TargetEventListeners.Clear();
     foreach (TargetingSystem ts in MyTargetEvent.Listeners)
@@ -57,25 +60,25 @@ public class EventBus : ScriptableObject
 
     // Either units or parties
     BattleEventListeners.Clear();
-    foreach (PartyStatus<UnitController> unit in MyBattleEvent.Listeners)
-      BattleEventListeners.Add(unit);
+    foreach (BattleSystem bs in MyBattleEvent.Listeners)
+      BattleEventListeners.Add(bs);
   }
 
-  public void ClearEvents()
+  void ClearEvents()
   {
-    MyRangeEvent.ClearListeners();
+    MyRangeEvent?.ClearListeners();
     MyRangeEvent = null;
 
-    MyTurnEvent.ClearListeners();
+    MyTurnEvent?.ClearListeners();
     MyTurnEvent = null;
 
-    MyUIEvent.ClearListeners();
+    MyUIEvent?.ClearListeners();
     MyUIEvent = null;
 
-    MyTargetEvent.ClearListeners();
+    MyTargetEvent?.ClearListeners();
     MyTargetEvent = null;
 
-    MyBattleEvent.ClearListeners();
+    MyBattleEvent?.ClearListeners();
     MyBattleEvent = null;
   }
 

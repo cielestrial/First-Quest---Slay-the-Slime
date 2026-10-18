@@ -20,7 +20,10 @@ public class BlockState : NoClickState
 
   public override IEnumerator OnCoroutine()
   {
-    return null;
+    eventBus.MyUIEvent.HideUI();
+    yield return null;
+    unit.ConsumeResources(unit.Actives[base.Name].Cost);
+    yield return null;
   }
 
   public override IEnumerator OnExit()

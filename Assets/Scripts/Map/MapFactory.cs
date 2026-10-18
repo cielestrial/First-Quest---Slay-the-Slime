@@ -1,6 +1,4 @@
-using Unity.VisualScripting;
 using UnityEngine;
-using UnityEngine.SceneManagement;
 
 public class MapFactory : MonoBehaviour
 {
@@ -13,18 +11,19 @@ public class MapFactory : MonoBehaviour
   [SerializeField] private GameObject CubeCellPrefab;
   [SerializeField] private GameObject QuadCellPrefab;
 
-  public void AdjustCellCollider()
+  void AdjustCellCollider()
   {
     BoxCollider collider = CubeCellPrefab.GetComponent<BoxCollider>();
     collider.size = new Vector3(1 + GridManager.SpacingX / 2, 1, 1 + GridManager.SpacingZ / 2);
     collider.center = new Vector3(GridManager.SpacingX / 4, 0, GridManager.SpacingZ / 4);
   }
 
-  public void AddDependencies(GridManager gridManager)
+  public void SetUp(GridManager gridManager)
   {
     this.gridManager = gridManager;
+    AdjustCellCollider();
   }
-  public void ClearDependencies()
+  public void TearDown()
   {
     gridManager = null;
   }

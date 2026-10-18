@@ -36,7 +36,7 @@ public abstract class State
       yield return null;
   }
   public virtual bool CanEnter()
-    => unit.SkillTree.ContainsKey(Name) && unit.SufficientResources(unit.SkillCost[Name]);
+    => unit.Actives.ContainsKey(Name) && unit.SufficientResources(unit.Actives[Name].Cost);
   public virtual bool CanExit() => true;
 
   public bool IsAnimationPlaying(string animName) =>

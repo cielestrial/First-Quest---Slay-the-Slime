@@ -19,7 +19,7 @@ namespace States.Knight
     public override void OnEnter()
     {
       base.OnEnter();
-      eventBus.MyRangeEvent.ShowRange(transform.position, unit.SkillRange[base.Name]);
+      eventBus.MyRangeEvent.ShowRange(transform.position, unit.Actives[base.Name].Range);
     }
 
     protected override IEnumerator RangeSelect()
@@ -48,7 +48,8 @@ namespace States.Knight
       }
 
       eventBus.MyRangeEvent.HideRange();
-      if (path.Count > 0)
+      // Path includes start position
+      if (path.Count > 1)
         yield return Action(path);
     }
 
@@ -58,8 +59,10 @@ namespace States.Knight
       Quaternion targetRotation;
       Vector3 directionVector;
 
+      eventBus.MyUIEvent.HideUI();
       animator.SetBool(base.Hash, true);
-      for (int pathIndex = 0, pathSize = path.Count; pathIndex < pathSize; ++pathIndex)
+      // Path includes start position
+      for (int pathIndex = 1, pathSize = path.Count; pathIndex < pathSize; ++pathIndex)
       {
         subTargetLocation = gridManager.LocationGrid[path[pathIndex].x, path[pathIndex].y];
         while (transform.position != subTargetLocation)
@@ -82,10 +85,12 @@ namespace States.Knight
 
       animator.SetBool(base.Hash, false);
       yield return null;
-      unit.ConsumeResources(unit.SkillCost[base.Name]);
+      gridManager.MoveInDetectionGrid(path[0], path[^1], unit);
+      unit.ConsumeResources(unit.Actives[base.Name].Cost);
       // Action chosen
       yield return null;
       eventBus.MyTurnEvent.ActionTaken();
+      yield return null;
     }
 
     public override IEnumerator OnExit()

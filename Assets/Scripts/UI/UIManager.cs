@@ -1,10 +1,13 @@
 using System.Collections.Generic;
 using TMPro;
+using Unit.Data;
 using UnityEngine;
 using UnityEngine.UI;
 
+[RequireComponent(typeof(Canvas))]
 public class UIManager : MonoBehaviour
 {
+  private Canvas canvas;
   private EventBus eventBus;
   // [SerializeField] private TurnManager MyTurnManager;
   public Button UnitButton;
@@ -22,30 +25,31 @@ public class UIManager : MonoBehaviour
   public TMP_Text ActionDescriptionDisplay;
   private UnitController prevUnit = null;
 
-  public void AddDependencies(EventBus eventBus)
+  public void SetUp(EventBus eventBus)
   {
     this.eventBus = eventBus;
+    AddListener();
+
+    canvas = GetComponent<Canvas>();
+    HideUI();
   }
-  public void ClearDependencies()
+  public void TearDown()
   {
+    RemoveListener();
     eventBus = null;
   }
-  public void AddListener()
+  void AddListener()
   {
     eventBus.MyUIEvent?.AddListener(this);
   }
-  public void RemoveListener()
+  void RemoveListener()
   {
-    eventBus.MyUIEvent?.RemoveListener(this);
+    if (eventBus != null)
+      eventBus.MyUIEvent?.RemoveListener(this);
   }
 
-  public void AddUnitSelectionButton(UnitController unit)
-  {
-    UnitSelect _button = Instantiate(UnitButton, UnitSelectParent).GetComponent<UnitSelect>();
-    unit.SetUnitSelectButton(_button);
-    _button.BindUnit(unit);
-    AddToUnitSelection(_button);
-  }
+  public void ShowUI() => canvas.enabled = true;
+  public void HideUI() => canvas.enabled = false;
 
   /** Frequent Updates */
   public void UpdateUnitInfoPanel(UnitController unit)
@@ -68,8 +72,8 @@ public class UIManager : MonoBehaviour
   {
     if (actionSelection.Count == 0)
     {
-      foreach (KeyValuePair<string, int> action in unit.SkillTree)
-        AddActionSelectionButton(unit, action);
+      foreach (KeyValuePair<string, Skill> action in unit.Actives)
+        AddActionSelectionButton(unit, action.Value);
       return;
     }
     if (prevUnit != null && prevUnit.UnitName == unit.UnitName)
@@ -77,9 +81,9 @@ public class UIManager : MonoBehaviour
       if (prevUnit.CurrentLevel == unit.CurrentLevel) // No change
         return;
       else // Update with new skills only
-        foreach (KeyValuePair<string, int> action in unit.SkillTree)
+        foreach (KeyValuePair<string, Skill> action in unit.Actives)
           if (!actionSelectionKeys.Contains(action.Key))
-            AddActionSelectionButton(unit, action);
+            AddActionSelectionButton(unit, action.Value);
     }
     else // Populate / Re-populate
     {
@@ -87,26 +91,26 @@ public class UIManager : MonoBehaviour
         DestroyImmediate(_button.gameObject);
       ClearActionSelection();
 
-      foreach (KeyValuePair<string, int> action in unit.SkillTree)
-        AddActionSelectionButton(unit, action);
+      foreach (KeyValuePair<string, Skill> action in unit.Actives)
+        AddActionSelectionButton(unit, action.Value);
 
       prevUnit = unit;
     }
   }
 
-  private void AddActionSelectionButton(UnitController unit, KeyValuePair<string, int> action)
+  private void AddActionSelectionButton(UnitController unit, Skill skill)
   {
-    if (unit.CurrentLevel < action.Value) return;
+    if (unit.CurrentLevel < skill.LevelReq) return;
 
     ActionSelect _button = Instantiate(ActionButton, UnitActionsParent).GetComponent<ActionSelect>();
-    _button.ButtonLabel.text = action.Key;
-    _button.SetActionDetails(action.Key, action.Value, unit.SkillDesc[action.Key]);
+    _button.ButtonLabel.text = skill.Name;
+    _button.SetActionDetails(skill.Name, skill.Level, skill.Description);
     _button.MyButton.onClick.RemoveAllListeners();
     _button.MyButton.onClick.AddListener(() =>
     {
       ActionInfoDisplay.text = _button.GetActionInfo();
       ActionDescriptionDisplay.text = _button.GetActionDescription();
-      StartCoroutine(unit.PerformAction(action.Key));
+      StartCoroutine(unit.PerformAction(skill));
     });
     AddToActionSelection(_button);
   }
@@ -124,17 +128,21 @@ public class UIManager : MonoBehaviour
     ClearActionSelection();
   }
 
-  private void AddToUnitSelection(UnitSelect _button)
+  public void AddToUnitSelection(UnitController unit)
   {
+    UnitSelect _button = Instantiate(UnitButton, UnitSelectParent).GetComponent<UnitSelect>();
+    unit.SetUnitSelectButton(_button);
+    _button.BindUnit(unit);
     unitSelection.Add(_button);
     unitSelectionKeys.Add(_button.UnitName);
   }
 
-  public void RemoveUnitSelection(UnitController unit)
+  public void RemoveFromUnitSelection(UnitController unit)
   {
-    unitSelection.Remove(unit.UnitSelectButton);
     unitSelectionKeys.Remove(unit.UnitSelectButton.UnitName);
-    DestroyImmediate(unit.gameObject);
+    unitSelection.Remove(unit.UnitSelectButton);
+    unit.UnitSelectButton.UnbindUnit(unit);
+    unit.SetUnitSelectButton(null);
   }
   private void AddToActionSelection(ActionSelect _button)
   {

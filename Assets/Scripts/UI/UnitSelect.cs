@@ -34,6 +34,12 @@ public class UnitSelect : MonoBehaviour
     });
   }
 
+  public void UnbindUnit(UnitController unit)
+  {
+    MyButton.onClick.RemoveAllListeners();
+    ControlledUnit = null;
+  }
+
   private void SetLabel(UnitController unit)
   {
     UnitName = unit.UnitName;

@@ -1,4 +1,3 @@
-using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
@@ -11,10 +10,17 @@ public class SlimePartyStatus : PartyStatus<SlimeController>
   {
     Vector2Int slimeStartL = GetStartLocation();
     Quaternion slimeStartQ = GetStartQuaternion();
-    SlimeController slime = Instantiate(SlimePrefab, scene).GetComponent<SlimeController>();
-    slime.AddDependencies(eventBus, gridManager, targetingSystem);
-    slime.Setup();
+    SlimeController slime = Bootstrapper.SpawnInScene(SlimePrefab, scene);
+    slime.SetUp(eventBus, gridManager, GetDetectionType(), targetingSystem);
     slime.transform.SetPositionAndRotation(gridManager.LocationGrid[slimeStartL.x, slimeStartL.y], slimeStartQ);
+    gridManager.AddToDetectionGrid(slimeStartL, slime);
     AddUnit(slime);
+    SetInitialTurnEnder(slime);
+  }
+
+  public void AIUnitSelection()
+  {
+    if (Units.Count >= 0)
+      eventBus.MyTurnEvent.UnitSelected(Units[0]);
   }
 }

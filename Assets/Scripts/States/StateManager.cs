@@ -23,10 +23,11 @@ public abstract class StateManager
       animator.SetFloat(SpeedHash, TurnManager.GameSpeed);
   }
 
+  public bool IsInBlockState() => animator.GetBool(BlockState.Hash);
   public bool IsInIdleOrBlockState() => animator.GetBool(IdleState.Hash);
   // CurrentState.Hash == IdleState.Hash || CurrentState.Hash == BlockState.Hash;
 
-  public IEnumerator TransitionState(State to)
+  public IEnumerator TransitionState(State to, bool CoroutineAutoStart = false)
   {
     if (CurrentState.Hash != to.Hash && CurrentState.CanExit() && to.CanEnter())
     {
@@ -34,6 +35,8 @@ public abstract class StateManager
       // yield return null;
       CurrentState = to;
       CurrentState.OnEnter();
+      if (CoroutineAutoStart)
+        yield return CurrentState.OnCoroutine();
     }
   }
 }

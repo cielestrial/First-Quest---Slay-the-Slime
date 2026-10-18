@@ -1,5 +1,4 @@
 using System.Threading.Tasks;
-using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.Rendering;
@@ -15,11 +14,12 @@ public class Bootstrapper : MonoBehaviour
   [SerializeField] private EventBus eventBus;
   [SerializeField] private GridManager gridManager;
   [SerializeField] private TargetingSystem targetingSystem;
+  [SerializeField] private BattleSystem battleSystem;
   [SerializeField] private SlimePartyStatus slimeParty;
   [SerializeField] private HeroPartyStatus heroParty;
 
   [SerializeField] private MapFactory mapPrefab;
-  [SerializeField] private Canvas canvasPrefab;
+  [SerializeField] private UIManager canvasPrefab;
   [SerializeField] private TurnManager turnManagerPrefab;
 
   private Scene battleScene;
@@ -34,11 +34,8 @@ public class Bootstrapper : MonoBehaviour
   {
     SafeStart();
 
-    slimeParty.IsPlaying = false;
-    heroParty.IsPlaying = false;
-
     await StartPhase1();
-    await StartPhase2();
+    StartPhase2();
   }
   void OnDestroy() => Shutdown();
 
@@ -47,54 +44,62 @@ public class Bootstrapper : MonoBehaviour
     Shutdown();
     isShuttingDown = false;
   }
+
+  public static T SpawnInScene<T>(T prefab, Scene scene) where T : Component
+  {
+    T instance = Instantiate(prefab);
+    SceneManager.MoveGameObjectToScene(instance.gameObject, scene);
+    return instance;
+  }
+
   async Task StartPhase1()
   {
     // Bootstrapper scene is 0
     // TitleScreen scene is 1
     // Battle scene is 2 
+    await SceneManager.LoadSceneAsync(1, LoadSceneMode.Additive);
     await SceneManager.LoadSceneAsync(2, LoadSceneMode.Additive);
     battleScene = SceneManager.GetSceneByName("Battle");
 
     // Scene defaults
-    mainCamera = Instantiate(mainCameraPrefab, battleScene).GetComponent<Camera>();
+    mainCamera = SpawnInScene(mainCameraPrefab, battleScene);
     Instantiate(mainLightingPrefab, battleScene);
     Instantiate(globalVolumePrefab, battleScene);
     Instantiate(eventSystemPrefab, battleScene);
 
     // Scriptable Objects
-    eventBus.AddEvents();
+    eventBus.SetUp();
     gridManager.CreateGrid();
 
-    targetingSystem.AddDependencies(mainCamera, eventBus);
-    targetingSystem.AddListener();
+    targetingSystem.SetUp(mainCamera, eventBus);
 
-    slimeParty.AddDependencies(eventBus, gridManager, targetingSystem);
-    heroParty.AddDependencies(eventBus, gridManager, targetingSystem);
+    slimeParty.SetUp(eventBus, gridManager, targetingSystem);
+    heroParty.SetUp(eventBus, gridManager, targetingSystem);
+
+    battleSystem.SetUp(eventBus, slimeParty, heroParty);
+
+    await Task.Delay(1000);
+    await SceneManager.UnloadSceneAsync(1);
 
     // Monobehaviours
-    mapFactory = Instantiate(mapPrefab, battleScene).GetComponent<MapFactory>();
-    mapFactory.AddDependencies(gridManager);
-    mapFactory.AdjustCellCollider();
+    mapFactory = SpawnInScene(mapPrefab, battleScene);
+    mapFactory.SetUp(gridManager);
     mapFactory.SpawnMap();
 
-    uiManager = Instantiate(canvasPrefab, battleScene).GetComponent<UIManager>();
-    uiManager.AddDependencies(eventBus);
-    uiManager.AddListener();
+    uiManager = SpawnInScene(canvasPrefab, battleScene);
+    uiManager.SetUp(eventBus);
 
-    turnManager = Instantiate(turnManagerPrefab, battleScene).GetComponent<TurnManager>();
-    turnManager.AddDependencies(eventBus, slimeParty, heroParty);
-    turnManager.AddListener();
+    turnManager = SpawnInScene(turnManagerPrefab, battleScene);
+    turnManager.SetUp(eventBus, slimeParty, heroParty);
 
     rangeManager = mapFactory.transform.GetChild(1).GetComponent<RangeManager>();
-    rangeManager.AddDependencies(mapFactory, eventBus, gridManager);
-    rangeManager.Setup();
-    rangeManager.AddListener();
+    rangeManager.SetUp(mapFactory, eventBus, gridManager);
   }
-  async Task StartPhase2()
+  void StartPhase2()
   {
     // Game ready
+    eventBus.Snapshot();
     heroParty.IsPlaying = true;
-    // Maybe move to different file?
     slimeParty.SpawnInitialUnit(battleScene);
     heroParty.SpawnInitialUnit(battleScene);
     turnManager.StartBattle();
@@ -110,36 +115,53 @@ public class Bootstrapper : MonoBehaviour
   void ShutdownPhase1()
   {
     // Game
-    turnManager.StopBattle();
-    slimeParty.IsPlaying = false;
-    heroParty.IsPlaying = false;
+    if (turnManager != null)
+      turnManager.StopBattle();
+    if (gridManager != null)
+      gridManager.ResetDetectionGrid();
   }
+
   void ShutdownPhase2()
   {
     // Monobehaviours
-    rangeManager.RemoveListener();
-    rangeManager.ClearDependencies();
-    rangeManager = null;
+    if (rangeManager != null)
+    {
+      rangeManager.TearDown();
+      rangeManager = null;
+    }
 
-    turnManager.RemoveListener();
-    turnManager.ClearDependencies();
-    turnManager = null;
+    if (turnManager != null)
+    {
+      turnManager.TearDown();
+      turnManager = null;
+    }
 
-    uiManager.RemoveListener();
-    uiManager.ClearDependencies();
-    uiManager = null;
+    if (uiManager != null)
+    {
+      uiManager.TearDown();
+      uiManager = null;
+    }
 
-    mapFactory.ClearDependencies();
-    mapFactory = null;
+    if (mapFactory != null)
+    {
+      mapFactory.TearDown();
+      mapFactory = null;
+    }
 
     // Scriptable Objects
-    heroParty.ClearDependencies();
-    slimeParty.ClearDependencies();
+    if (battleSystem != null)
+      battleSystem.TearDown();
 
-    targetingSystem.RemoveListener();
-    targetingSystem.ClearDependencies();
+    if (heroParty != null)
+      heroParty.TearDown();
+    if (slimeParty != null)
+      slimeParty.TearDown();
 
-    eventBus.ClearEvents();
+    if (targetingSystem != null)
+      targetingSystem.TearDown();
+
+    if (eventBus != null)
+      eventBus.TearDown();
 
     // Scene defaults
     mainCamera = null;

@@ -155,10 +155,11 @@ MonoBehaviour:
   eventBus: {fileID: 11400000, guid: 5b9d11cfd4ce618489bdd971e17d32d4, type: 2}
   gridManager: {fileID: 11400000, guid: f68fbd9f951f19a4a97c788b59441c8b, type: 2}
   targetingSystem: {fileID: 11400000, guid: d7753958e8449f649a15610c0e7f7c8f, type: 2}
+  battleSystem: {fileID: 11400000, guid: 23498a02bf1b23d44a05e3358d9fc405, type: 2}
   slimeParty: {fileID: 11400000, guid: 75170be2aabb6724ebce802700d78ed4, type: 2}
   heroParty: {fileID: 11400000, guid: bfa278baffd102c45b5fc89f20e2d009, type: 2}
   mapPrefab: {fileID: 6827469616580188712, guid: 15efc69b993cdf346b0b196316a78e98, type: 3}
-  canvasPrefab: {fileID: 388331734849781739, guid: 0c6835b22b097634db0612daf5a29f45, type: 3}
+  canvasPrefab: {fileID: 4690521640344584232, guid: 0c6835b22b097634db0612daf5a29f45, type: 3}
   turnManagerPrefab: {fileID: 4003188825691623610, guid: 4e62f7c501a15d042b9353fb51a25d8e, type: 3}
 --- !u!4 &738394936
 Transform:

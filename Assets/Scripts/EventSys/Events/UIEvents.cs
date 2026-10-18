@@ -8,7 +8,12 @@ namespace EventSys.Events
     public void AddUnit(UnitController unit)
     {
       foreach (UIManager listener in Listeners)
-        listener.AddUnitSelectionButton(unit);
+        listener.AddToUnitSelection(unit);
+    }
+    public void RemoveUnit(UnitController unit)
+    {
+      foreach (UIManager listener in Listeners)
+        listener.RemoveFromUnitSelection(unit);
     }
     public void UpdateUnitInfo(UnitController unit)
     {
@@ -19,6 +24,16 @@ namespace EventSys.Events
     {
       foreach (UIManager listener in Listeners)
         listener.ShowActions(unit);
+    }
+    public void HideUI()
+    {
+      foreach (UIManager listener in Listeners)
+        listener.HideUI();
+    }
+    public void ShowUI()
+    {
+      foreach (UIManager listener in Listeners)
+        listener.ShowUI();
     }
 
     public void ClearUnitInfoPanel()

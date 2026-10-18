@@ -7,10 +7,10 @@ namespace EventSys.Events
   {
     public TargetEvent(int capacity) : base(capacity) { }
 
-    public void FocusCameraOn(UnitController unit)
+    public void FocusCameraOn(IFocusable target)
     {
       foreach (TargetingSystem listener in Listeners)
-        listener.FocusCameraOnTarget(unit);
+        listener.FocusCameraOnTarget(target);
     }
   }
 

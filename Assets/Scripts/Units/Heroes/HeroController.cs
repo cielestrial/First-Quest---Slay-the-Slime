@@ -1,8 +1,9 @@
+using Unit.Data;
+
 public abstract class HeroController : UnitController
 {
   protected static new int CurrentAP = 2;
   protected static new int TotalAP = 2;
-
   public override int GetCurrentAP() => CurrentAP;
   public override int GetTotalAP() => TotalAP;
 

@@ -4,14 +4,22 @@
 - Enemy Turn
 - More Chars
 - Advanced Camera
+- more unit tests
 
 [Design]
-- unit tests (UTF)
 
 [Tools]
+
 - reflex/vcontainer
 - UnityTask
 - DoTween & Litmotion
+
+[Learn]
+
+- Design Patterns
+- Testing
+- Tools
+- Shaders
 
 [Troubleshooting]
 

@@ -1,18 +1,22 @@
+using System;
 using System.Collections.Generic;
+using Grid.Data;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
 public abstract class PartyStatus<T> : ScriptableObject
   where T : UnitController
 {
-  public bool IsPlaying = false;
+  [NonSerialized] public bool IsPlaying;
   protected EventBus eventBus;
   protected GridManager gridManager;
   protected TargetingSystem targetingSystem;
 
-  public List<T> Units { get; private set; } = new(GridManager.MaxGridSize);
+  protected List<T> Units;
+  const int ReviveLimit = 4;
+  protected List<T> DeadUnits;
 
-  public void AddDependencies(
+  public void SetUp(
     EventBus eventBus,
     GridManager gridManager,
     TargetingSystem targetingSystem
@@ -21,10 +25,16 @@ public abstract class PartyStatus<T> : ScriptableObject
     this.eventBus = eventBus;
     this.gridManager = gridManager;
     this.targetingSystem = targetingSystem;
+    IsPlaying = false;
+    Units = new(GridManager.MaxGridSize);
+    DeadUnits = new(ReviveLimit);
   }
 
-  public void ClearDependencies()
+  public void TearDown()
   {
+    DeadUnits?.Clear();
+    Units?.Clear();
+    IsPlaying = false;
     targetingSystem = null;
     gridManager = null;
     eventBus = null;
@@ -37,6 +47,33 @@ public abstract class PartyStatus<T> : ScriptableObject
       eventBus.MyUIEvent.AddUnit(unit);
   }
 
+  public void StoreDeadUnit(T unit)
+  {
+    Units.Remove(unit);
+    unit.gameObject.SetActive(false);
+
+    if (DeadUnits.Count < ReviveLimit)
+      DeadUnits.Add(unit);
+
+    else if (DeadUnits.Count == ReviveLimit)
+    {
+      int weakest = 0;
+      for (int i = 1; i < ReviveLimit; ++i)
+        if (DeadUnits[i].CurrentLevel < DeadUnits[weakest].CurrentLevel)
+          weakest = i;
+
+      if (unit.CurrentLevel < DeadUnits[weakest].CurrentLevel)
+        Destroy(unit.gameObject);
+      else
+      {
+        T garbage = DeadUnits[weakest];
+        DeadUnits.RemoveAt(weakest);
+        DeadUnits.Add(unit);
+        Destroy(garbage.gameObject);
+      }
+    }
+  }
+
   public int GetPartyHp()
   {
     int partyHP = 0;
@@ -47,7 +84,7 @@ public abstract class PartyStatus<T> : ScriptableObject
 
   public abstract void SpawnInitialUnit(Scene scene);
 
-  public Vector2Int GetStartLocation()
+  protected Vector2Int GetStartLocation()
   {
     int startOffset = GridManager.DefaultRowSize * 2;
     int x = Mathf.FloorToInt(GridManager.MaxRowSize / 2);
@@ -55,9 +92,20 @@ public abstract class PartyStatus<T> : ScriptableObject
     else return new Vector2Int(x, GridManager.MaxRowSize - 1 - startOffset);
   }
 
-  public Quaternion GetStartQuaternion()
+  protected Quaternion GetStartQuaternion()
   {
     if (IsPlaying) return Quaternion.identity;
     else return Quaternion.Euler(0, 180, 0);
+  }
+
+  protected DetectionType GetDetectionType()
+  => IsPlaying ? DetectionType.Ally : DetectionType.Enemy;
+
+  protected void SetInitialTurnEnder(UnitController unit)
+  {
+    if (IsPlaying)
+      eventBus.MyTurnEvent.SetPlayerTurnEnder(unit);
+    else
+      eventBus.MyTurnEvent.SetEnemyTurnEnder(unit);
   }
 }

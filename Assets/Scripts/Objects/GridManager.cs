@@ -1,11 +1,9 @@
 using System.Collections.Generic;
 using UnityEngine;
+using Grid.Data;
 
-[CreateAssetMenu(fileName = "GridManager", menuName = "Scriptable Objects/GridManager")]
-public class GridManager : ScriptableObject
+namespace Grid.Data
 {
-  public Vector3[,] LocationGrid { get; private set; }
-  public int[,] DetectionGrid { get; private set; }
   public enum DetectionType
   {
     Nothing = 0,
@@ -13,6 +11,11 @@ public class GridManager : ScriptableObject
     Enemy = 2,
     Terrain = 3
   }
+}
+
+[CreateAssetMenu(fileName = "GridManager", menuName = "Scriptable Objects/GridManager")]
+public class GridManager : ScriptableObject
+{
   public int Phase { get; private set; } = 1;
   public int PhaseMaxRowSize { get; private set; }
   public const int MaxPhases = 3;
@@ -22,23 +25,51 @@ public class GridManager : ScriptableObject
   public const int MaxGridSize = MaxRowSize * MaxRowSize;
   public const float SpacingX = 0.1f;
   public const float SpacingZ = 0.4f;
+  public Vector3[,] LocationGrid { get; private set; }
+  public Dictionary<Vector2Int, UnitController> DetectionGrid { get; private set; }
 
   public void CreateGrid()
   {
     // Initialize
-    PhaseMaxRowSize = (Phase * 2 - 1) * DefaultRowSize;
     LocationGrid = new Vector3[MaxRowSize, MaxRowSize];
-    DetectionGrid = new int[MaxRowSize, MaxRowSize];
-
+    DetectionGrid = new(MaxGridSize);
+    PhaseMaxRowSize = (Phase * 2 - 1) * DefaultRowSize;
     // Populate
     for (int x, y = 0; y < MaxRowSize; ++y)
-    {
       for (x = 0; x < MaxRowSize; ++x)
-      {
         LocationGrid[x, y] = new Vector3(x * (1 + SpacingX), 0, y * (1 + SpacingZ));
-        DetectionGrid[x, y] = (int)DetectionType.Nothing;
-      }
+  }
+
+  public void ResetDetectionGrid()
+  {
+    DetectionGrid?.Clear();
+  }
+
+  // Add, Remove, Move
+  public void AddToDetectionGrid(Vector2Int location, UnitController unit)
+  {
+    bool res = false;
+    if (ValidGridLocation(location))
+      res = DetectionGrid.TryAdd(location, unit);
+    Debug.Log(res ? "Unit addition succeded" : "Unit addition failed");
+  }
+
+  public void RemoveFromDetectionGrid(Vector2Int location)
+  {
+    bool res = DetectionGrid.Remove(location);
+    Debug.Log(res ? "Unit removal succeded" : "Unit removal failed");
+  }
+
+  public void MoveInDetectionGrid(Vector2Int start, Vector2Int end, UnitController unit)
+  {
+    if (DetectionGrid.ContainsKey(start) && ValidGridLocation(end) && !DetectionGrid.ContainsKey(end))
+    {
+      DetectionGrid.Add(end, unit);
+      DetectionGrid.Remove(start);
+      Debug.Log("Unit move succeded");
     }
+    else
+      Debug.Log("Unit move failed");
   }
 
   public static Vector2Int ConvertIndexToVector2Int(int index)
@@ -104,6 +135,7 @@ public class GridManager : ScriptableObject
       path.Add(current);
       current = cameFrom[current];
     }
+    path.Add(start);
     path.Reverse();
     return path;
   }
@@ -119,16 +151,16 @@ public class GridManager : ScriptableObject
   }
 
   private bool DetectEmptyCell(Vector2Int location)
-    => DetectionGrid[location.x, location.y] == (int)DetectionType.Nothing;
+    => !DetectionGrid.ContainsKey(location);
 
   private bool DetectAllyCell(Vector2Int location)
-=> DetectionGrid[location.x, location.y] == (int)DetectionType.Ally;
+=> DetectionGrid[location].DetectionType == DetectionType.Ally;
 
   private bool DetectEnemyCell(Vector2Int location)
-    => DetectionGrid[location.x, location.y] == (int)DetectionType.Enemy;
+    => DetectionGrid[location].DetectionType == DetectionType.Enemy;
 
   private bool DetectTerrainCell(Vector2Int location)
-  => DetectionGrid[location.x, location.y] == (int)DetectionType.Terrain;
+  => DetectionGrid[location].DetectionType == DetectionType.Terrain;
 
   public List<Vector2Int> FilterEnemies(List<Vector2Int> aoe)
   {

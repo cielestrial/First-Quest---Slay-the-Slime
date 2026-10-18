@@ -1,13 +1,14 @@
 using System.Collections.Generic;
+using Unit.Data;
 using UnityEngine;
 
 public class AwakeningSkills : MonoBehaviour
 {
   public const int SkillCount = 4;
-  public Dictionary<string, int> SkillTree { get; protected set; } = new(SkillCount);
-  public Dictionary<string, string> SkillDesc { get; protected set; } = new(SkillCount);
-  public Dictionary<string, int> SkillTreeUnlock { get; protected set; } = new(SkillCount);
-  public Dictionary<string, int> UpgradeTree { get; protected set; } = new(SkillCount);
+  public Dictionary<string, State> States { get; protected set; } = new(15);
+  public Dictionary<string, Skill> SkillTree { get; protected set; } = new(15);
+  public Dictionary<string, Skill> Actives { get; protected set; } = new(15);
+  public Dictionary<string, Skill> Passives { get; protected set; } = new(15);
 
 
 }

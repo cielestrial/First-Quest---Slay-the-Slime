@@ -19,16 +19,16 @@ namespace States.Knight
     public override void OnEnter()
     {
       base.OnEnter();
-      eventBus.MyRangeEvent.ShowRange(transform.position, unit.SkillRange[base.Name]);
+      eventBus.MyRangeEvent.ShowRange(transform.position, unit.Actives[base.Name].Range);
     }
 
     protected override IEnumerator RangeSelect()
     {
       Vector2Int gridPos;
-      List<Vector2Int> aoe = new(0);
+      List<Vector2Int> targetLocations = new(0);
       Vector3 rangePos = Vector3.zero;
 
-      while (aoe.Count == 0)
+      while (targetLocations.Count == 0)
       {
         if (abortCoroutine)
         {
@@ -45,10 +45,10 @@ namespace States.Knight
             {
               rangePos = rangeTransform.position;
               gridPos = GridManager.ConvertWorldPosToGrid(rangePos);
-              aoe = RangeManager.GetRangeAoE(rangeTransform.tag, gridPos, unit.SkillRange[base.Name]);
-              Debug.Log($"before filter: {aoe.Count}");
+              targetLocations = RangeManager.GetRangeAoE(rangeTransform.tag, gridPos, unit.Actives[base.Name].Range);
+              Debug.Log($"before filter: {targetLocations.Count}");
               // aoe = gridManager.FilterEnemies(aoe);
-              Debug.Log($"after filter: {gridManager.FilterEnemies(aoe).Count}");
+              Debug.Log($"after filter: {gridManager.FilterEnemies(targetLocations).Count}");
             }
           }
         }
@@ -56,21 +56,23 @@ namespace States.Knight
       }
 
       eventBus.MyRangeEvent.HideRange();
-      if (aoe.Count > 0)
-        yield return Action(rangePos, aoe);
+      if (targetLocations.Count > 0)
+        yield return Action(rangePos, targetLocations);
     }
 
-    protected override IEnumerator Action(Vector3 rangePos, List<Vector2Int> victims)
+    protected override IEnumerator Action(Vector3 rangePos, List<Vector2Int> targetLocations)
     {
+      eventBus.MyUIEvent.HideUI();
       // Turn towards selected range
       yield return RotateIntoAction(rangePos, MoveState.Hash);
       // Trigger damage via new Battle Event
-      // eventBus.BattleEvent.Damage(victims);
+      eventBus.MyBattleEvent.DamageDealt(unit, unit.Actives[base.Name].AtkMod, targetLocations);
       yield return null;
-      unit.ConsumeResources(unit.SkillCost[base.Name]);
+      unit.ConsumeResources(unit.Actives[base.Name].Cost);
       yield return null;
       // Action chosen
       eventBus.MyTurnEvent.ActionTaken();
+      yield return null;
     }
 
     public override IEnumerator OnExit()

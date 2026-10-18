@@ -1,6 +1,12 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
 
+public interface IFocusable
+{
+  Vector3 FocusPosition { get; }
+  Vector2Int GridPosition { get; }
+}
+
 [CreateAssetMenu(fileName = "TargetingSystem", menuName = "Scriptable Objects/TargetingSystem")]
 public class TargetingSystem : ScriptableObject
 {
@@ -12,16 +18,28 @@ public class TargetingSystem : ScriptableObject
   private Ray rayOrigin;
   private RaycastHit hitInfo;
   private Vector2 mousePos;
+  const float CameraOffset = 25.2f - 9.8f;
 
-  public void AddDependencies(Camera mainCamera, EventBus eventBus)
+  public void SetUp(Camera mainCamera, EventBus eventBus)
   {
     this.mainCamera = mainCamera;
     this.eventBus = eventBus;
+    AddListener();
   }
-  public void ClearDependencies()
+  public void TearDown()
   {
+    RemoveListener();
     eventBus = null;
     mainCamera = null;
+  }
+  void AddListener()
+  {
+    eventBus.MyTargetEvent?.AddListener(this);
+  }
+  void RemoveListener()
+  {
+    if (eventBus != null)
+      eventBus.MyTargetEvent?.RemoveListener(this);
   }
 
   private bool HasCamera()
@@ -33,16 +51,6 @@ public class TargetingSystem : ScriptableObject
     }
     return true;
   }
-
-  public void AddListener()
-  {
-    eventBus.MyTargetEvent?.AddListener(this);
-  }
-  public void RemoveListener()
-  {
-    eventBus.MyTargetEvent?.RemoveListener(this);
-  }
-
   public Vector3? GetClickLocation()
   {
     if (!HasCamera()) return null;
@@ -73,13 +81,13 @@ public class TargetingSystem : ScriptableObject
     return null;
   }
 
-  public void FocusCameraOnTarget(UnitController unit)
+  public void FocusCameraOnTarget(IFocusable target)
   {
     if (!HasCamera()) return;
     mainCamera.transform.position = new Vector3(
-      unit.transform.position.x,
+      target.FocusPosition.x,
       mainCamera.transform.position.y,
-      unit.transform.position.z - (25.2f - 9.8f)
+      target.FocusPosition.z - CameraOffset
     );
   }
 

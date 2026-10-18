@@ -1,68 +1,23 @@
+using Grid.Data;
 using States.Knight;
+using Unit.Data;
 using UnityEngine;
 
-[RequireComponent(typeof(Animator))]
 public class KnightController : HeroController
 {
-  public override void Setup()
+  public override void SetUp(
+    EventBus eventBus,
+    GridManager gridManager,
+    DetectionType detectionType,
+    TargetingSystem targetingSystem
+    )
   {
+    base.SetUp(eventBus, gridManager, detectionType, targetingSystem);
     UnitName = "Knight";
-    MyAnimator = GetComponent<Animator>();
-
-    // Level Requirement to learn
-    SkillTreeUnlock.Add(MoveState.Name, 1);
-    SkillTreeUnlock.Add("Slash", 1);
-    SkillTreeUnlock.Add("Block", 4);
-    SkillTreeUnlock.Add("Mega Slash", 8);
-    SkillTreeUnlock.Add("Party Up", 10);
-    SkillTreeUnlock.Add("Counter", 16);
-    SkillTreeUnlock.Add("Awakening", 24);
-    // Skill Descriptions
-    SkillDesc.Add(MoveState.Name, "Active\nEmpty: Move to a new location");
-    SkillDesc.Add("Slash", "Active\nEnemy: Deal single target damage");
-    SkillDesc.Add("Block", "Active\nNone: Reduce incoming damage");
-    SkillDesc.Add("Mega Slash", "Active\nEnemy: Deal AOE damage");
-    SkillDesc.Add("Party Up", "Passive: Gain a new party member");
-    SkillDesc.Add("Counter", "Passive: Upon succesful block retaliate with slash");
-    SkillDesc.Add("Awakening", "Passive: Gain access to specialized skills");
-    // Skill Type
-    SkillActionType.Add(MoveState.Name, ActionType.EmptyClick);
-    SkillActionType.Add("Slash", ActionType.EnemyClick);
-    SkillActionType.Add("Block", ActionType.NoClick);
-    SkillActionType.Add("Mega Slash", ActionType.EnemyClick);
-    SkillActionType.Add("Party Up", ActionType.Idle);
-    SkillActionType.Add("Counter", ActionType.Idle);
-    SkillActionType.Add("Awakening", ActionType.Idle);
-    // Skill Ranges 1 = 1, 2 = 3, 3 = 5, 4 = 7, 5 = 9...
-    // Where (1, 1) is a cross and (2, 1) is a square
-    SkillRange.Add(MoveState.Name, GenerateSquareRange(2));
-    SkillRange.Add("Slash", new(1, 1));
-    SkillRange.Add("Mega Slash", new(2, 1));
-    // Skill cost
-    SkillCost.Add(MoveState.Name, new(1));
-    SkillCost.Add("Slash", new(1));
-    SkillCost.Add("Block", new(1));
-    SkillCost.Add("Mega Slash", new(2, 2));
-    SkillCost.Add("Party Up", new(2));
-    SkillCost.Add("Counter", new());
-    SkillCost.Add("Awakening", new(2));
-    // Skill Upgrade available every x levels from learn requirement level
-    UpgradeTree.Add("Slash", 5);
-    UpgradeTree.Add("Block", 5);
-    UpgradeTree.Add("Mega Slash", 6);
-    UpgradeTree.Add("Party Up", 10);
-    UpgradeTree.Add("Counter", 5);
-    // Skill Tree, learnt skills and their level
-    SkillTree.Add(MoveState.Name, 1);
-    SkillTree.Add("Slash", 1);
-    // SkillTree.Add("Block", 1);
-    SkillTree.Add("Mega Slash", 1);
-    // SkillTree.Add("Party Up", 1);
-    // SkillTree.Add("Counter", 1);
-    // SkillTree.Add("Awakening", 1);
 
     // States
     States.Add(IdleState.Name, new IdleState(this));
+    States.Add(DeadState.Name, new DeadState(this));
     States.Add(MoveState.Name, new MoveState(this));
     States.Add(SlashState.Name, new SlashState(this));
     States.Add(BlockState.Name, new BlockState(this));
@@ -72,6 +27,100 @@ public class KnightController : HeroController
     // States.Add("Awakening", 24);
 
     MyStateManager = new KnightStateManager(States[IdleState.Name], this);
+
+    // Level Requirement to learn
+    SkillTree.Add(MoveState.Name, new Skill(
+      MoveState.Name,
+      "Active\nEmpty: Move to a new location",
+      ActionType.EmptyClick,
+      1,
+      States[MoveState.Name],
+      0f,
+      GenerateSquareRange(2),
+      new SkillResourceCost(1)
+    ));
+
+    SkillTree.Add(SlashState.Name, new Skill(
+      SlashState.Name,
+      "Active\nEnemy: Deal single target damage",
+      ActionType.EnemyClick,
+      1,
+      States[SlashState.Name],
+      1f,
+      new Vector2Int(1, 1),
+      new SkillResourceCost(1)
+    ));
+
+    SkillTree.Add(BlockState.Name, new Skill(
+      BlockState.Name,
+      "Active\nNone: Reduce incoming damage",
+      ActionType.NoClick,
+      4,
+      States[BlockState.Name],
+      0f,
+      Vector2Int.zero,
+      new SkillResourceCost(1)
+    ));
+
+    SkillTree.Add(MegaSlashState.Name, new Skill(
+      MegaSlashState.Name,
+      "Active\nEnemy: Deal AOE damage",
+      ActionType.EnemyClick,
+      8,
+      States[MegaSlashState.Name],
+      2f,
+      new Vector2Int(2, 1),
+      new SkillResourceCost(2, 2)
+    ));
+
+    SkillTree.Add("Party Up", new Skill(
+      "Party Up",
+      "Passive: Gain a new party member",
+      ActionType.Idle,
+      10,
+      States[IdleState.Name],
+      0f,
+      Vector2Int.zero,
+      new SkillResourceCost(2)
+    ));
+
+    SkillTree.Add("Counter", new Skill(
+      "Counter",
+      "Passive: Upon succesful block retaliate with slash",
+      ActionType.Idle,
+      16,
+      States[IdleState.Name],
+      0f,
+      Vector2Int.zero,
+      new SkillResourceCost(0)
+    ));
+
+    SkillTree.Add("Awakening", new Skill(
+      "Awakening",
+      "Passive: Gain access to specialized skills",
+      ActionType.Idle,
+      24,
+      States[IdleState.Name],
+      0f,
+      Vector2Int.zero,
+      new SkillResourceCost(2)
+    ));
+
+    // Skill Upgrade available every x levels from learn requirement level
+    // UpgradeTree.Add("Slash", 5);
+    // UpgradeTree.Add("Block", 5);
+    // UpgradeTree.Add("Mega Slash", 6);
+    // UpgradeTree.Add("Party Up", 10);
+    // UpgradeTree.Add("Counter", 5);
+
+    // Skill Tree, learnt skills and their level
+    Actives.Add(MoveState.Name, SkillTree[MoveState.Name]);
+    Actives.Add(SlashState.Name, SkillTree[SlashState.Name]);
+    Actives.Add(BlockState.Name, SkillTree[BlockState.Name]);
+    Actives.Add(MegaSlashState.Name, SkillTree[MegaSlashState.Name]);
+    // Passives.Add("Party Up", 1);
+    // Passives.Add("Counter", 1);
+    // Passives.Add("Awakening", 1);
   }
 
 

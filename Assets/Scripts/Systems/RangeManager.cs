@@ -1,5 +1,4 @@
 using System.Collections.Generic;
-using Unity.VisualScripting;
 using UnityEngine;
 
 public class RangeManager : MonoBehaviour
@@ -14,7 +13,7 @@ public class RangeManager : MonoBehaviour
   { Vector3Int.forward, Vector3Int.right, Vector3Int.back, Vector3Int.left };
   private static readonly int cardinalCount = Cardinals2D.Length;
   private readonly Transform[] rangePivots = new Transform[cardinalCount];
-  public void AddDependencies(
+  public void SetUp(
     MapFactory mapFactory,
     EventBus eventBus,
     GridManager gridManager
@@ -23,28 +22,32 @@ public class RangeManager : MonoBehaviour
     this.mapFactory = mapFactory;
     this.eventBus = eventBus;
     this.gridManager = gridManager;
+    AddListener();
+    GetRanges();
   }
-  public void ClearDependencies()
+  public void TearDown()
   {
+    RemoveListener();
     gridManager = null;
     eventBus = null;
     mapFactory = null;
   }
 
-  public void Setup()
+  void GetRanges()
   {
     for (int index = 0; index < cardinalCount; ++index)
       rangePivots[index] = transform.GetChild(index);
 
     HideRanges();
   }
-  public void AddListener()
+  void AddListener()
   {
     eventBus.MyRangeEvent?.AddListener(this);
   }
-  public void RemoveListener()
+  void RemoveListener()
   {
-    eventBus.MyRangeEvent?.RemoveListener(this);
+    if (eventBus != null)
+      eventBus.MyRangeEvent?.RemoveListener(this);
   }
   public void ClipRanges()
   {
